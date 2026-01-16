@@ -40,6 +40,7 @@ export default function AdminDashboardPage() {
   }
 
   const activeWeek = weeks?.find((w) => w.isActive);
+  const weeksWithSubmissions = weeks?.filter((w) => !w.isGraded) || [];
   const ungradedWeeks = weeks?.filter((w) => !w.isGraded && !w.isActive) || [];
 
   return (
@@ -172,22 +173,27 @@ export default function AdminDashboardPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <ClipboardCheck className="h-5 w-5 text-accent" />
-                Grading Queue
+                View Submissions
               </CardTitle>
-              <CardDescription>Grade pending submissions</CardDescription>
+              <CardDescription>View and grade team submissions</CardDescription>
             </CardHeader>
             <CardContent>
-              {ungradedWeeks.length > 0 ? (
+              {weeksWithSubmissions.length > 0 ? (
                 <div className="space-y-2">
-                  {ungradedWeeks.map((week) => (
+                  {weeksWithSubmissions.map((week) => (
                     <Link key={week.id} href={`/admin/grade/${week.id}`}>
                       <div className="flex items-center justify-between p-3 rounded-lg border hover:bg-muted/50 transition-colors cursor-pointer">
                         <div className="flex items-center gap-3">
-                          <Badge variant="secondary">Week {week.weekNumber}</Badge>
+                          <Badge variant={week.isActive ? "default" : "secondary"}>
+                            Week {week.weekNumber}
+                          </Badge>
                           <span className="text-sm">{week.title}</span>
+                          {week.isActive && (
+                            <Badge className="bg-success text-success-foreground">Active</Badge>
+                          )}
                         </div>
                         <Button size="sm" data-testid={`button-grade-${week.id}`}>
-                          Grade
+                          {week.isActive ? "View" : "Grade"}
                         </Button>
                       </div>
                     </Link>
@@ -195,7 +201,7 @@ export default function AdminDashboardPage() {
                 </div>
               ) : (
                 <p className="text-center text-muted-foreground py-8">
-                  No submissions pending grading
+                  No submissions to view
                 </p>
               )}
             </CardContent>

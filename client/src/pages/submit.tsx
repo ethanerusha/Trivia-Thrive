@@ -251,7 +251,7 @@ export default function SubmitPage() {
                   <AlertDialogHeader>
                     <AlertDialogTitle>Submit answers?</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Are you sure you want to submit your team's answers? You can update them until the week is graded.
+                      Are you sure you want to submit your team's answers? You can update them until the week is closed.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>

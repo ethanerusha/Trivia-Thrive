@@ -94,7 +94,7 @@ export default function MyTeamPage() {
   }
 
   const approvedMembers = myTeam.members.filter((m) => m.isApproved);
-  const isTrophyEligible = approvedMembers.length === 3;
+  const isTrophyEligible = approvedMembers.length >= 1 && approvedMembers.length <= 3;
 
   return (
     <div className="min-h-screen bg-background">
@@ -116,8 +116,7 @@ export default function MyTeamPage() {
             </h1>
             <p className="text-muted-foreground mt-1">
               {approvedMembers.length}/4 members
-              {approvedMembers.length < 3 && " - Need at least 3 for trophy eligibility"}
-              {approvedMembers.length === 4 && " - Not trophy eligible"}
+              {approvedMembers.length === 4 && " - Not trophy eligible (max 3 for trophy)"}
             </p>
           </div>
           <Link href="/leaderboard">

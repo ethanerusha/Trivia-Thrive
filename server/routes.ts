@@ -119,6 +119,20 @@ export async function registerRoutes(
     res.json({ user: { ...user, password: undefined } });
   });
 
+  app.post("/api/auth/forgot-password", async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+      // Always return success to prevent email enumeration
+      // In a real app, this would send an email with a reset token
+      res.json({ message: "If an account exists, reset instructions have been sent" });
+    } catch (error) {
+      res.status(500).json({ message: "Request failed" });
+    }
+  });
+
   // ===== TEAM ROUTES =====
   app.get("/api/teams", requireAuth, async (req, res) => {
     const teams = await storage.getAllTeamsWithMembers();

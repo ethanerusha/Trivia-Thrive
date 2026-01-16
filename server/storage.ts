@@ -377,6 +377,8 @@ export class DatabaseStorage implements IStorage {
   // Leaderboard
   async getLeaderboard(): Promise<LeaderboardEntry[]> {
     const allTeams = await this.getAllTeamsWithMembers();
+    const allWeeks = await this.getAllWeeks();
+    const publishedWeeks = allWeeks.filter(w => w.isPublished).sort((a, b) => a.weekNumber - b.weekNumber);
     
     const leaderboard = await Promise.all(
       allTeams.map(async (team) => {
@@ -385,9 +387,17 @@ export class DatabaseStorage implements IStorage {
           .from(submissions)
           .where(and(eq(submissions.teamId, team.id), eq(submissions.isGraded, true)));
         
-        const totalPoints = teamSubmissions.reduce((sum, sub) => {
-          return sum + parseFloat(sub.totalPoints?.toString() || "0");
-        }, 0);
+        // Build weekly scores array
+        const weeklyScores = publishedWeeks.map(week => {
+          const submission = teamSubmissions.find(s => s.weekId === week.id);
+          return {
+            weekNumber: week.weekNumber,
+            weekId: week.id,
+            points: submission ? parseFloat(submission.totalPoints?.toString() || "0") : 0,
+          };
+        });
+        
+        const totalPoints = weeklyScores.reduce((sum, ws) => sum + ws.points, 0);
 
         return {
           teamId: team.id,
@@ -395,6 +405,7 @@ export class DatabaseStorage implements IStorage {
           memberCount: team.memberCount,
           totalPoints,
           rank: 0,
+          weeklyScores,
         };
       })
     );

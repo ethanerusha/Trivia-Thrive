@@ -195,4 +195,5 @@ export type LeaderboardEntry = {
   memberCount: number;
   totalPoints: number;
   rank: number;
+  weeklyScores: { weekNumber: number; weekId: string; points: number }[];
 };

@@ -9,6 +9,7 @@ import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/landing";
 import LoginPage from "@/pages/auth/login";
 import RegisterPage from "@/pages/auth/register";
+import ForgotPasswordPage from "@/pages/auth/forgot-password";
 import DashboardPage from "@/pages/dashboard";
 import TeamsPage from "@/pages/teams/index";
 import CreateTeamPage from "@/pages/teams/create";
@@ -107,6 +108,11 @@ function Router() {
           <RegisterPage />
         </PublicOnlyRoute>
       </Route>
+      <Route path="/forgot-password">
+        <PublicOnlyRoute>
+          <ForgotPasswordPage />
+        </PublicOnlyRoute>
+      </Route>
       <Route path="/dashboard">
         <ProtectedRoute>
           <DashboardPage />
@@ -181,7 +187,7 @@ function AppContent() {
   const { user } = useAuth();
   const [location] = useLocation();
   
-  const showNavbar = user || !["/", "/login", "/register"].includes(location);
+  const showNavbar = user || !["/", "/login", "/register", "/forgot-password"].includes(location);
 
   return (
     <>

@@ -84,19 +84,21 @@ The storage layer (`server/storage.ts`) provides a data access abstraction over 
 - Removed @wwt.com email restriction - open registration for WWT employees
 - Removed team lead approval workflow - users can directly join teams
 - Added team size cap: maximum 4 members per team
-- Added trophy eligibility rules: teams of 3 are eligible, teams of 4 are not
+- Trophy eligibility: Teams of 1-3 members are eligible, teams of 4 are not
 - Any team member can now submit answers (not just team lead)
 
 ### Completed Features
 - User registration and login (open to WWT employees)
+- **Password reset flow**: Forgot password page with admin contact fallback
 - Team creation with direct joining (no approval needed)
-- Team size limits with trophy eligibility display
-- Weekly trivia submission system (any team member)
+- Team size limits with trophy eligibility display (1-3 members eligible, 4 not)
+- Weekly trivia submission system (any team member can submit/edit until week closed)
 - **Submission tracking**: Shows which team member submitted answers and when
 - **Configurable point values**: Each question can have 1-10 max points (e.g., 0/1 for simple, 0-3 for complex)
 - **Enhanced grading**: Admin can award 0 to maxPoints per question with slider and quick-select buttons
+- **Admin can view submissions while week is active** (not just after deactivation)
 - **Detailed results view**: Shows points earned vs max possible, with color-coded full/partial/wrong indicators
 - Admin portal for managing weeks, questions, and grading
-- Leaderboard with real-time rankings
+- **Enhanced leaderboard**: Shows per-week scores across columns before total
 - Archives for viewing past weeks' results
 - Navy/Slate/Gold Material Design theme per design_guidelines.md
