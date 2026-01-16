@@ -71,3 +71,18 @@ The storage layer (`server/storage.ts`) provides a data access abstraction over 
 ### Environment Variables Required
 - `DATABASE_URL`: PostgreSQL connection string
 - `SESSION_SECRET`: Secret key for session encryption (optional, has default)
+
+## Recent Changes (January 2026)
+
+### Cache Invalidation Fix
+- Fixed leaderboard not showing newly created teams by adding cache invalidation for `/api/leaderboard` when teams are created
+- Leaderboard now properly displays all teams with 0 points immediately after team creation
+
+### Completed Features
+- User registration and login with @wwt.com email restriction
+- Team creation, joining, and approval workflow
+- Weekly trivia submission system (Team Leads only)
+- Admin portal for managing weeks, questions, and grading
+- Leaderboard with real-time rankings
+- Archives for viewing past weeks' results
+- Navy/Slate/Gold Material Design theme per design_guidelines.md
