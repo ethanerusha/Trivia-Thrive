@@ -16,6 +16,7 @@ import { ArrowLeft, Plus, Trash2, Loader2, Calendar } from "lucide-react";
 const questionSchema = z.object({
   questionText: z.string().min(1, "Question is required"),
   correctAnswer: z.string().min(1, "Answer is required"),
+  maxPoints: z.coerce.number().min(1, "Points must be at least 1").max(10, "Points cannot exceed 10"),
 });
 
 const createWeekSchema = z.object({
@@ -35,7 +36,7 @@ export default function CreateWeekPage() {
     defaultValues: {
       weekNumber: 1,
       title: "",
-      questions: Array(10).fill({ questionText: "", correctAnswer: "" }),
+      questions: Array(10).fill(null).map(() => ({ questionText: "", correctAnswer: "", maxPoints: 1 })),
     },
   });
 
@@ -153,23 +154,44 @@ export default function CreateWeekPage() {
                         </FormItem>
                       )}
                     />
-                    <FormField
-                      control={form.control}
-                      name={`questions.${index}.correctAnswer`}
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="text-sm text-muted-foreground">Correct Answer</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder="Enter the correct answer..."
-                              data-testid={`input-answer-${index + 1}`}
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
+                      <FormField
+                        control={form.control}
+                        name={`questions.${index}.correctAnswer`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-sm text-muted-foreground">Correct Answer</FormLabel>
+                            <FormControl>
+                              <Input
+                                placeholder="Enter the correct answer..."
+                                data-testid={`input-answer-${index + 1}`}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name={`questions.${index}.maxPoints`}
+                        render={({ field }) => (
+                          <FormItem className="w-24">
+                            <FormLabel className="text-sm text-muted-foreground">Max Points</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min={1}
+                                max={10}
+                                data-testid={`input-maxpoints-${index + 1}`}
+                                {...field}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
                   </div>
                 ))}
               </CardContent>

@@ -51,9 +51,9 @@ The storage layer (`server/storage.ts`) provides a data access abstraction over 
 - **Teams**: Name; one team per user; 3-4 members allowed
 - **Team Members**: Join table linking users to teams (direct join, no approval needed)
 - **Weeks**: Trivia rounds with week number, title, active/archived status
-- **Questions**: 10 questions per week with correct answers
-- **Submissions**: Team answers per week with grading status
-- **Answers**: Individual question responses with points earned
+- **Questions**: 10 questions per week with correct answers and configurable `maxPoints` (1-10)
+- **Submissions**: Team answers per week with grading status, tracks `submittedById` to show who submitted
+- **Answers**: Individual question responses with `pointsAwarded` (0 to question's maxPoints)
 
 ## External Dependencies
 
@@ -92,6 +92,10 @@ The storage layer (`server/storage.ts`) provides a data access abstraction over 
 - Team creation with direct joining (no approval needed)
 - Team size limits with trophy eligibility display
 - Weekly trivia submission system (any team member)
+- **Submission tracking**: Shows which team member submitted answers and when
+- **Configurable point values**: Each question can have 1-10 max points (e.g., 0/1 for simple, 0-3 for complex)
+- **Enhanced grading**: Admin can award 0 to maxPoints per question with slider and quick-select buttons
+- **Detailed results view**: Shows points earned vs max possible, with color-coded full/partial/wrong indicators
 - Admin portal for managing weeks, questions, and grading
 - Leaderboard with real-time rankings
 - Archives for viewing past weeks' results

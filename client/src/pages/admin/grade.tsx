@@ -223,44 +223,35 @@ export default function GradePage() {
                           <p className="p-2 bg-accent/10 rounded text-accent font-medium mb-4">
                             {answer.question.correctAnswer}
                           </p>
-                          <p className="text-sm font-medium text-muted-foreground mb-2">Points (0-1)</p>
+                          <p className="text-sm font-medium text-muted-foreground mb-2">
+                            Points (0-{answer.question.maxPoints})
+                          </p>
                           <div className="flex items-center gap-4">
                             <Slider
                               value={[grades[answer.id] || 0]}
                               onValueChange={([value]) =>
                                 setGrades((prev) => ({ ...prev, [answer.id]: value }))
                               }
-                              max={1}
-                              step={0.5}
+                              max={answer.question.maxPoints}
+                              step={answer.question.maxPoints > 1 ? 1 : 0.5}
                               className="flex-1"
                               data-testid={`slider-${answer.id}`}
                             />
                             <span className="font-bold text-lg w-12 text-center">
-                              {(grades[answer.id] || 0).toFixed(1)}
+                              {(grades[answer.id] || 0).toFixed(answer.question.maxPoints > 1 ? 0 : 1)}
                             </span>
                           </div>
-                          <div className="flex gap-2 mt-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setGrades((prev) => ({ ...prev, [answer.id]: 0 }))}
-                            >
-                              0
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setGrades((prev) => ({ ...prev, [answer.id]: 0.5 }))}
-                            >
-                              0.5
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => setGrades((prev) => ({ ...prev, [answer.id]: 1 }))}
-                            >
-                              1
-                            </Button>
+                          <div className="flex gap-2 mt-2 flex-wrap">
+                            {Array.from({ length: answer.question.maxPoints + 1 }, (_, i) => (
+                              <Button
+                                key={i}
+                                size="sm"
+                                variant={grades[answer.id] === i ? "default" : "outline"}
+                                onClick={() => setGrades((prev) => ({ ...prev, [answer.id]: i }))}
+                              >
+                                {i}
+                              </Button>
+                            ))}
                           </div>
                         </div>
                       </div>

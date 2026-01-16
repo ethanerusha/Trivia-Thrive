@@ -48,7 +48,7 @@ export interface IStorage {
   getSubmissionWithAnswers(teamId: string, weekId: string): Promise<SubmissionWithAnswers | undefined>;
   getTeamSubmissions(teamId: string): Promise<SubmissionWithAnswers[]>;
   getWeekSubmissions(weekId: string): Promise<SubmissionWithAnswers[]>;
-  createSubmission(teamId: string, weekId: string): Promise<Submission>;
+  createSubmission(teamId: string, weekId: string, submittedById: string): Promise<Submission>;
   updateSubmission(id: string, data: Partial<Submission>): Promise<void>;
   getPendingSubmissionsCount(): Promise<number>;
   
@@ -271,7 +271,13 @@ export class DatabaseStorage implements IStorage {
       })
     );
 
-    return { ...submission, answers: answersWithQuestions, team };
+    let submittedBy = null;
+    if (submission.submittedById) {
+      const [user] = await db.select().from(users).where(eq(users.id, submission.submittedById));
+      submittedBy = user || null;
+    }
+
+    return { ...submission, answers: answersWithQuestions, team, submittedBy };
   }
 
   async getTeamSubmissions(teamId: string): Promise<SubmissionWithAnswers[]> {
@@ -291,7 +297,14 @@ export class DatabaseStorage implements IStorage {
             return { ...answer, question };
           })
         );
-        return { ...submission, answers: answersWithQuestions, team };
+        
+        let submittedBy = null;
+        if (submission.submittedById) {
+          const [user] = await db.select().from(users).where(eq(users.id, submission.submittedById));
+          submittedBy = user || null;
+        }
+        
+        return { ...submission, answers: answersWithQuestions, team, submittedBy };
       })
     );
   }
@@ -312,15 +325,22 @@ export class DatabaseStorage implements IStorage {
             return { ...answer, question };
           })
         );
-        return { ...submission, answers: answersWithQuestions, team };
+        
+        let submittedBy = null;
+        if (submission.submittedById) {
+          const [user] = await db.select().from(users).where(eq(users.id, submission.submittedById));
+          submittedBy = user || null;
+        }
+        
+        return { ...submission, answers: answersWithQuestions, team, submittedBy };
       })
     );
   }
 
-  async createSubmission(teamId: string, weekId: string): Promise<Submission> {
+  async createSubmission(teamId: string, weekId: string, submittedById: string): Promise<Submission> {
     const [submission] = await db
       .insert(submissions)
-      .values({ teamId, weekId })
+      .values({ teamId, weekId, submittedById })
       .returning();
     return submission;
   }

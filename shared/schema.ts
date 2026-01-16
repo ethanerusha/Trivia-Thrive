@@ -79,6 +79,7 @@ export const questions = pgTable("questions", {
   questionNumber: integer("question_number").notNull(),
   questionText: text("question_text").notNull(),
   correctAnswer: text("correct_answer").notNull(),
+  maxPoints: integer("max_points").default(1).notNull(),
 });
 
 export const questionsRelations = relations(questions, ({ one, many }) => ({
@@ -94,6 +95,7 @@ export const submissions = pgTable("submissions", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   teamId: varchar("team_id").notNull().references(() => teams.id),
   weekId: varchar("week_id").notNull().references(() => weeks.id),
+  submittedById: varchar("submitted_by_id").references(() => users.id),
   submittedAt: timestamp("submitted_at").defaultNow().notNull(),
   isGraded: boolean("is_graded").default(false).notNull(),
   totalPoints: decimal("total_points", { precision: 4, scale: 1 }).default("0"),
@@ -107,6 +109,10 @@ export const submissionsRelations = relations(submissions, ({ one, many }) => ({
   week: one(weeks, {
     fields: [submissions.weekId],
     references: [weeks.id],
+  }),
+  submittedBy: one(users, {
+    fields: [submissions.submittedById],
+    references: [users.id],
   }),
   answers: many(answers),
 }));
@@ -180,6 +186,7 @@ export type WeekWithQuestions = Week & {
 export type SubmissionWithAnswers = Submission & {
   answers: (Answer & { question: Question })[];
   team: Team;
+  submittedBy?: User | null;
 };
 
 export type LeaderboardEntry = {

@@ -3,8 +3,9 @@ import { Link } from "wouter";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { ClipboardList, CheckCircle2, XCircle, Clock, HelpCircle } from "lucide-react";
+import { ClipboardList, CheckCircle2, XCircle, Clock, HelpCircle, User } from "lucide-react";
 import type { SubmissionWithAnswers, Week } from "@shared/schema";
 
 export default function SubmissionsPage() {
@@ -50,6 +51,7 @@ export default function SubmissionsPage() {
             {submissions.map((submission) => {
               const week = getWeekInfo(submission.weekId);
               const totalPoints = parseFloat(submission.totalPoints?.toString() || "0");
+              const maxPossiblePoints = submission.answers.reduce((sum, a) => sum + (a.question.maxPoints || 1), 0);
               
               return (
                 <AccordionItem key={submission.id} value={submission.id} className="border rounded-lg overflow-hidden">
@@ -64,7 +66,7 @@ export default function SubmissionsPage() {
                       <div className="flex items-center gap-2">
                         {submission.isGraded ? (
                           <Badge className="bg-accent text-accent-foreground">
-                            {totalPoints} pts
+                            {totalPoints}/{maxPossiblePoints} pts
                           </Badge>
                         ) : (
                           <Badge variant="outline" className="text-muted-foreground">
@@ -76,12 +78,23 @@ export default function SubmissionsPage() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent className="px-6 pb-4">
+                    {submission.submittedBy && (
+                      <div className="flex items-center gap-2 py-2 mb-3 border-b text-sm text-muted-foreground">
+                        <User className="h-4 w-4" />
+                        <span>Submitted by <strong className="text-foreground">{submission.submittedBy.name}</strong></span>
+                        <span className="text-xs">
+                          on {new Date(submission.submittedAt).toLocaleDateString()} at {new Date(submission.submittedAt).toLocaleTimeString()}
+                        </span>
+                      </div>
+                    )}
                     <div className="space-y-4 pt-2">
                       {submission.answers
                         .sort((a, b) => a.question.questionNumber - b.question.questionNumber)
                         .map((answer) => {
                           const points = parseFloat(answer.pointsAwarded?.toString() || "0");
-                          const isCorrect = submission.isGraded && points > 0;
+                          const maxPoints = answer.question.maxPoints || 1;
+                          const isFullPoints = submission.isGraded && points === maxPoints;
+                          const isPartial = submission.isGraded && points > 0 && points < maxPoints;
                           const isWrong = submission.isGraded && points === 0;
 
                           return (
@@ -92,13 +105,24 @@ export default function SubmissionsPage() {
                                   <span className="text-sm font-medium">
                                     Question {answer.question.questionNumber}
                                   </span>
+                                  {maxPoints > 1 && (
+                                    <Badge variant="outline" className="text-xs">
+                                      {maxPoints} pts possible
+                                    </Badge>
+                                  )}
                                 </div>
                                 {submission.isGraded && (
                                   <Badge
-                                    variant={isCorrect ? "default" : "secondary"}
-                                    className={isCorrect ? "bg-success text-success-foreground" : ""}
+                                    variant={isFullPoints ? "default" : isPartial ? "secondary" : "secondary"}
+                                    className={
+                                      isFullPoints 
+                                        ? "bg-success text-success-foreground" 
+                                        : isPartial 
+                                          ? "bg-amber-500 text-white"
+                                          : ""
+                                    }
                                   >
-                                    {points} pt{points !== 1 ? "s" : ""}
+                                    {points}/{maxPoints} pts
                                   </Badge>
                                 )}
                               </div>
@@ -109,14 +133,18 @@ export default function SubmissionsPage() {
                                 
                                 <div className={`flex items-start gap-2 p-3 rounded-md ${
                                   submission.isGraded
-                                    ? isCorrect
+                                    ? isFullPoints
                                       ? "bg-success/10"
-                                      : "bg-destructive/10"
+                                      : isPartial
+                                        ? "bg-amber-500/10"
+                                        : "bg-destructive/10"
                                     : "bg-muted/50"
                                 }`}>
                                   {submission.isGraded ? (
-                                    isCorrect ? (
+                                    isFullPoints ? (
                                       <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                                    ) : isPartial ? (
+                                      <CheckCircle2 className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
                                     ) : (
                                       <XCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
                                     )
@@ -129,9 +157,11 @@ export default function SubmissionsPage() {
                                     </p>
                                     <p className={
                                       submission.isGraded
-                                        ? isCorrect
+                                        ? isFullPoints
                                           ? "text-success font-medium"
-                                          : "text-destructive font-medium"
+                                          : isPartial
+                                            ? "text-amber-600 font-medium"
+                                            : "text-destructive font-medium"
                                         : ""
                                     }>
                                       {answer.answerText}

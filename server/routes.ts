@@ -253,8 +253,13 @@ export async function registerRoutes(
       let submission = await storage.getSubmission(member.teamId, weekId);
       if (submission) {
         await storage.deleteAnswersBySubmission(submission.id);
+        // Update submission with new submitter and timestamp
+        await storage.updateSubmission(submission.id, { 
+          submittedById: req.session.userId,
+          submittedAt: new Date()
+        });
       } else {
-        submission = await storage.createSubmission(member.teamId, weekId);
+        submission = await storage.createSubmission(member.teamId, weekId, req.session.userId!);
       }
 
       for (const answer of answerData) {
@@ -298,6 +303,7 @@ export async function registerRoutes(
           questionNumber: i + 1,
           questionText: questionData[i].questionText,
           correctAnswer: questionData[i].correctAnswer,
+          maxPoints: questionData[i].maxPoints || 1,
         });
       }
 
@@ -335,16 +341,38 @@ export async function registerRoutes(
     try {
       const { grades } = req.body;
       
+      // Get week with questions to validate maxPoints
+      const week = await storage.getWeekWithQuestions(req.params.weekId);
+      if (!week) {
+        return res.status(404).json({ message: "Week not found" });
+      }
+      
+      // Get all submissions to map answer IDs to question maxPoints
+      const submissions = await storage.getWeekSubmissions(req.params.weekId);
+      const answerToMaxPoints: Record<string, number> = {};
+      for (const submission of submissions) {
+        for (const answer of submission.answers) {
+          answerToMaxPoints[answer.id] = answer.question.maxPoints || 1;
+        }
+      }
+      
+      // Apply grades with clamping to valid range
       for (const grade of grades) {
-        await storage.updateAnswer(grade.answerId, { pointsAwarded: grade.points.toString() });
+        const maxPoints = answerToMaxPoints[grade.answerId] || 1;
+        const clampedPoints = Math.max(0, Math.min(grade.points, maxPoints));
+        await storage.updateAnswer(grade.answerId, { pointsAwarded: clampedPoints.toString() });
       }
 
       // Calculate total points per submission
-      const submissions = await storage.getWeekSubmissions(req.params.weekId);
       for (const submission of submissions) {
         const total = submission.answers.reduce((sum, answer) => {
           const grade = grades.find((g: any) => g.answerId === answer.id);
-          return sum + (grade ? grade.points : 0);
+          if (grade) {
+            const maxPoints = answer.question.maxPoints || 1;
+            const clampedPoints = Math.max(0, Math.min(grade.points, maxPoints));
+            return sum + clampedPoints;
+          }
+          return sum;
         }, 0);
         await storage.updateSubmission(submission.id, { 
           isGraded: true, 

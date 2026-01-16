@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { ClipboardList, Save, Send, ArrowLeft, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { ClipboardList, Save, Send, ArrowLeft, Loader2, CheckCircle2, AlertCircle, User } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,7 +39,12 @@ export default function SubmitPage() {
     queryKey: ["/api/teams/my-team"],
   });
 
-  const { data: existingSubmission } = useQuery({
+  const { data: existingSubmission } = useQuery<{
+    id: string;
+    answers: { questionId: string; answerText: string }[];
+    submittedBy?: { id: string; name: string } | null;
+    submittedAt: string;
+  } | null>({
     queryKey: ["/api/submissions/my-team", weekId],
     enabled: !!weekId && !!myTeam,
   });
@@ -171,6 +176,20 @@ export default function SubmitPage() {
             {allAnswered && <CheckCircle2 className="h-5 w-5 text-success" />}
           </div>
         </div>
+
+        {existingSubmission?.submittedBy && (
+          <Card className="mb-6 border-accent/30 bg-accent/5">
+            <CardContent className="py-4">
+              <div className="flex items-center gap-2 text-sm">
+                <User className="h-4 w-4 text-accent" />
+                <span>Last submitted by <strong>{existingSubmission.submittedBy.name}</strong></span>
+                <span className="text-muted-foreground">
+                  on {new Date(existingSubmission.submittedAt).toLocaleDateString()} at {new Date(existingSubmission.submittedAt).toLocaleTimeString()}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="space-y-6 mb-8">
           {sortedQuestions.map((question) => (
