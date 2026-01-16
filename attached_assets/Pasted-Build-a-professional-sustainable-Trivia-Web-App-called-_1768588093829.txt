@@ -1,0 +1,41 @@
+Build a professional, sustainable Trivia Web App called "Tuesday Trivia: Season 10."
+ 
+### 1. TECH STACK & PORTABILITY
+- Backend: Python (Flask) with SQLAlchemy.
+- Database: PostgreSQL (use Replit's managed Postgres).
+- Frontend: Tailwind CSS for a modern, corporate "Season 10" aesthetic.
+- Portability: All secrets must be pulled from environment variables. Include a 'requirements.txt'.
+ 
+### 2. AUTHENTICATION & EMAIL (CRITICAL)
+- Domain Lock: Only allow registration for emails ending in '@wwt.com'.
+- Verification: Implement a mandatory email verification flow. Users cannot log in until they click a verification link sent to their email.
+- SMTP Setup: Use Flask-Mail. The app must look for the following Environment Variables in the Secrets tab from the start:
+    - MAIL_SERVER, MAIL_PORT, MAIL_USE_TLS, MAIL_USERNAME, MAIL_PASSWORD, MAIL_DEFAULT_SENDER.
+ 
+### 3. TEAM SYSTEM & ROLES
+- Creation: Users can 'Create a Team' (becomes Team Lead) or 'Join a Team'.
+- Approval: If a user joins a team, the Team Lead must 'Approve' them via a team management dashboard before they appear on the roster.
+- Directory: A page to view all teams, their members, and their "Season 10" status.
+- One-Team Rule: Each user can only belong to one team.
+ 
+### 4. TRIVIA ENGINE & SUBMISSIONS
+- Weekly Questions: Admin posts 10 questions and 10 correct answers.
+- Archives: Users can view a library of "Past Questions" from previous weeks.
+- Submission: ONLY the Team Lead can submit the 10 answers for the team.
+- Grading Interface: An Admin-only view showing "Team Answer" vs. "Correct Answer" side-by-side. Admin assigns points (0 to 1) for each.
+- Results View: Once graded, users see a report for that week: [Question] | [Their Answer] | [Correct Answer] | [Points Earned].
+ 
+### 5. LEADERBOARD & ADMIN PORTAL
+- Leaderboard: A ranked table showing Team Name, Member Count, and Cumulative Points.
+- Admin Portal: Ability to:
+    1. Post/Edit weekly questions.
+    2. Grade pending submissions.
+    3. Manually override/modify any team's total points.
+    4. "Publish" scores to update the leaderboard live.
+ 
+### 6. UI/UX REQUIREMENTS
+- Theme: Professional "Season 10" branding (Navy, Slate, and Gold accents).
+- Responsiveness: Mobile-first design for users checking scores on the go.
+- Flashed Messages: Clear notifications for "Email Sent," "Team Joined," and "Scores Published."
+ 
+Scaffold the database models first, then build the Auth and Team logic, followed by the Trivia and Admin features.
