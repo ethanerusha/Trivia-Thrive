@@ -133,9 +133,7 @@ export const answersRelations = relations(answers, ({ one }) => ({
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, isAdmin: true, isVerified: true, verificationToken: true }).extend({
-  email: z.string().email().refine((email) => email.endsWith("@wwt.com"), {
-    message: "Only @wwt.com email addresses are allowed",
-  }),
+  email: z.string().email("Please enter a valid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   name: z.string().min(1, "Name is required"),
 });
