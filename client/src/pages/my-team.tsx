@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Crown, Check, X, UserMinus, Clock, Trophy, ArrowRight } from "lucide-react";
+import { Users, Trophy } from "lucide-react";
 import type { TeamWithMembers } from "@shared/schema";
 import {
   AlertDialog,
@@ -28,45 +28,6 @@ export default function MyTeamPage() {
 
   const { data: myTeam, isLoading } = useQuery<TeamWithMembers | null>({
     queryKey: ["/api/teams/my-team"],
-  });
-
-  const approveMutation = useMutation({
-    mutationFn: async (memberId: string) => {
-      return await apiRequest("POST", `/api/teams/members/${memberId}/approve`);
-    },
-    onSuccess: () => {
-      toast({ title: "Member approved!" });
-      queryClient.invalidateQueries({ queryKey: ["/api/teams/my-team"] });
-    },
-    onError: (error: Error) => {
-      toast({ variant: "destructive", title: "Error", description: error.message });
-    },
-  });
-
-  const rejectMutation = useMutation({
-    mutationFn: async (memberId: string) => {
-      return await apiRequest("POST", `/api/teams/members/${memberId}/reject`);
-    },
-    onSuccess: () => {
-      toast({ title: "Request rejected" });
-      queryClient.invalidateQueries({ queryKey: ["/api/teams/my-team"] });
-    },
-    onError: (error: Error) => {
-      toast({ variant: "destructive", title: "Error", description: error.message });
-    },
-  });
-
-  const removeMutation = useMutation({
-    mutationFn: async (memberId: string) => {
-      return await apiRequest("DELETE", `/api/teams/members/${memberId}`);
-    },
-    onSuccess: () => {
-      toast({ title: "Member removed" });
-      queryClient.invalidateQueries({ queryKey: ["/api/teams/my-team"] });
-    },
-    onError: (error: Error) => {
-      toast({ variant: "destructive", title: "Error", description: error.message });
-    },
   });
 
   const leaveMutation = useMutation({
@@ -132,9 +93,8 @@ export default function MyTeamPage() {
     );
   }
 
-  const isTeamLead = myTeam.leadId === user?.id;
-  const pendingMembers = myTeam.members.filter((m) => !m.isApproved);
   const approvedMembers = myTeam.members.filter((m) => m.isApproved);
+  const isTrophyEligible = approvedMembers.length === 3;
 
   return (
     <div className="min-h-screen bg-background">
@@ -143,15 +103,21 @@ export default function MyTeamPage() {
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-3 flex-wrap">
               {myTeam.name}
-              {isTeamLead && (
+              {isTrophyEligible && (
                 <Badge className="bg-accent text-accent-foreground">
-                  <Crown className="h-3 w-3 mr-1" />
-                  Team Lead
+                  Trophy Eligible
+                </Badge>
+              )}
+              {approvedMembers.length === 4 && (
+                <Badge variant="outline">
+                  Full Team
                 </Badge>
               )}
             </h1>
             <p className="text-muted-foreground mt-1">
-              {approvedMembers.length} active member{approvedMembers.length !== 1 ? "s" : ""}
+              {approvedMembers.length}/4 members
+              {approvedMembers.length < 3 && " - Need at least 3 for trophy eligibility"}
+              {approvedMembers.length === 4 && " - Not trophy eligible"}
             </p>
           </div>
           <Link href="/leaderboard">
@@ -163,61 +129,6 @@ export default function MyTeamPage() {
         </div>
 
         <div className="grid gap-6">
-          {isTeamLead && pendingMembers.length > 0 && (
-            <Card className="border-accent/30">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-accent" />
-                  Pending Requests
-                  <Badge variant="secondary">{pendingMembers.length}</Badge>
-                </CardTitle>
-                <CardDescription>
-                  Members waiting for your approval
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {pendingMembers.map((member) => (
-                  <div
-                    key={member.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback className="bg-primary text-primary-foreground">
-                          {getInitials(member.user.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium">{member.user.name}</p>
-                        <p className="text-sm text-muted-foreground">{member.user.email}</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        className="bg-success text-success-foreground hover:bg-success/90"
-                        onClick={() => approveMutation.mutate(member.id)}
-                        disabled={approveMutation.isPending}
-                        data-testid={`button-approve-${member.id}`}
-                      >
-                        <Check className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => rejectMutation.mutate(member.id)}
-                        disabled={rejectMutation.isPending}
-                        data-testid={`button-reject-${member.id}`}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          )}
-
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -233,81 +144,48 @@ export default function MyTeamPage() {
                 >
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10 border-2 border-transparent">
-                      <AvatarFallback className={`${member.isLead ? "bg-accent text-accent-foreground" : "bg-primary text-primary-foreground"}`}>
+                      <AvatarFallback className="bg-primary text-primary-foreground">
                         {getInitials(member.user.name)}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-medium flex items-center gap-2">
-                        {member.user.name}
-                        {member.isLead && (
-                          <Crown className="h-4 w-4 text-accent" />
-                        )}
-                      </p>
+                      <p className="font-medium">{member.user.name}</p>
                       <p className="text-sm text-muted-foreground">{member.user.email}</p>
                     </div>
                   </div>
-                  {isTeamLead && !member.isLead && (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button size="sm" variant="ghost" className="text-destructive hover:text-destructive" data-testid={`button-remove-${member.id}`}>
-                          <UserMinus className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Remove team member?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            Are you sure you want to remove {member.user.name} from the team?
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            onClick={() => removeMutation.mutate(member.id)}
-                          >
-                            Remove
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
                 </div>
               ))}
             </CardContent>
           </Card>
 
-          {!isTeamLead && (
-            <Card>
-              <CardContent className="py-6">
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="outline" className="text-destructive hover:text-destructive" data-testid="button-leave-team">
+          <Card>
+            <CardContent className="py-6">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="text-destructive hover:text-destructive" data-testid="button-leave-team">
+                    Leave Team
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Leave team?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to leave {myTeam.name}?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={() => leaveMutation.mutate()}
+                    >
                       Leave Team
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Leave team?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        Are you sure you want to leave {myTeam.name}? You'll need to request to join again.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        onClick={() => leaveMutation.mutate()}
-                      >
-                        Leave Team
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </CardContent>
-            </Card>
-          )}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

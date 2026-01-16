@@ -168,13 +168,18 @@ export async function registerRoutes(
       return res.status(400).json({ message: "You are already on a team" });
     }
 
-    const team = await storage.getTeam(teamId);
+    const team = await storage.getTeamWithMembers(teamId);
     if (!team) {
       return res.status(404).json({ message: "Team not found" });
     }
 
-    await storage.addTeamMember(teamId, req.session.userId!, false);
-    res.json({ message: "Join request sent" });
+    const memberCount = team.members.filter(m => m.isApproved).length;
+    if (memberCount >= 4) {
+      return res.status(400).json({ message: "This team is full (maximum 4 members)" });
+    }
+
+    await storage.addTeamMember(teamId, req.session.userId!, true);
+    res.json({ message: "Successfully joined team" });
   });
 
   app.post("/api/teams/leave", requireAuth, async (req, res) => {
@@ -182,67 +187,11 @@ export async function registerRoutes(
     if (!member) {
       return res.status(400).json({ message: "You are not on a team" });
     }
-    if (member.isLead) {
-      return res.status(400).json({ message: "Team leads cannot leave. Transfer leadership first." });
-    }
     await storage.removeTeamMember(member.id);
     res.json({ message: "Left team" });
   });
 
-  app.post("/api/teams/members/:memberId/approve", requireAuth, async (req, res) => {
-    const { memberId } = req.params;
-    
-    const memberToApprove = await storage.getTeamMemberById(memberId);
-    if (!memberToApprove) {
-      return res.status(404).json({ message: "Member not found" });
-    }
-
-    const team = await storage.getTeam(memberToApprove.teamId);
-    if (!team || team.leadId !== req.session.userId) {
-      return res.status(403).json({ message: "Only team lead can approve members" });
-    }
-
-    await storage.approveTeamMember(memberId);
-    res.json({ message: "Member approved" });
-  });
-
-  app.post("/api/teams/members/:memberId/reject", requireAuth, async (req, res) => {
-    const { memberId } = req.params;
-    
-    const memberToReject = await storage.getTeamMemberById(memberId);
-    if (!memberToReject) {
-      return res.status(404).json({ message: "Member not found" });
-    }
-
-    const team = await storage.getTeam(memberToReject.teamId);
-    if (!team || team.leadId !== req.session.userId) {
-      return res.status(403).json({ message: "Only team lead can reject members" });
-    }
-
-    await storage.removeTeamMember(memberId);
-    res.json({ message: "Request rejected" });
-  });
-
-  app.delete("/api/teams/members/:memberId", requireAuth, async (req, res) => {
-    const { memberId } = req.params;
-    
-    const memberToRemove = await storage.getTeamMemberById(memberId);
-    if (!memberToRemove) {
-      return res.status(404).json({ message: "Member not found" });
-    }
-
-    const team = await storage.getTeam(memberToRemove.teamId);
-    if (!team || team.leadId !== req.session.userId) {
-      return res.status(403).json({ message: "Only team lead can remove members" });
-    }
-
-    if (memberToRemove.isLead) {
-      return res.status(400).json({ message: "Cannot remove team lead" });
-    }
-
-    await storage.removeTeamMember(memberId);
-    res.json({ message: "Member removed" });
-  });
+  // Note: Approval/reject routes removed since direct team joining (no approval workflow) is now used
 
   // ===== WEEK ROUTES =====
   app.get("/api/weeks", requireAuth, async (req, res) => {
@@ -294,11 +243,6 @@ export async function registerRoutes(
       const member = await storage.getTeamMember(req.session.userId!);
       if (!member || !member.isApproved) {
         return res.status(400).json({ message: "You must be on a team" });
-      }
-
-      const team = await storage.getTeam(member.teamId);
-      if (!team || team.leadId !== req.session.userId) {
-        return res.status(403).json({ message: "Only team lead can submit answers" });
       }
 
       const week = await storage.getWeek(weekId);

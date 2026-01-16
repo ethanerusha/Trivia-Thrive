@@ -1,8 +1,13 @@
-# Tuesday Trivia: Season 10
+# Tuesday Trivia: Season 6
 
 ## Overview
 
-Tuesday Trivia is a corporate team-based trivia competition web application for WWT employees. Teams compete weekly by answering trivia questions, with team leads submitting answers and admins grading responses. The app features user authentication restricted to @wwt.com emails, team management with approval workflows, weekly trivia rounds, leaderboards, and an admin portal for content management and scoring.
+Tuesday Trivia is a corporate team-based trivia competition web application for WWT employees. Teams compete weekly by answering trivia questions, with any team member able to submit answers and admins grading responses. The app features open registration for WWT employees, simple team joining (no approval workflow), weekly trivia rounds, leaderboards, and an admin portal for content management and scoring.
+
+### Team Size Rules
+- Teams can have 3 or 4 members (maximum 4)
+- Teams of 3 members are **trophy eligible**
+- Teams of 4 members can compete but are **not trophy eligible**
 
 ## User Preferences
 
@@ -38,13 +43,13 @@ The storage layer (`server/storage.ts`) provides a data access abstraction over 
 
 ### Authentication & Authorization
 - **Method**: Session-based authentication with bcryptjs password hashing
-- **Domain Restriction**: Only @wwt.com email addresses can register
-- **Role System**: Users have `isAdmin` flag for admin access; team leads have `isLead` flag in team membership
+- **Domain Restriction**: None (open registration for WWT employees)
+- **Role System**: Users have `isAdmin` flag for admin access; no team lead concept (any member can submit)
 
 ### Key Data Models
 - **Users**: Email, password, name, admin status, verification status
-- **Teams**: Name, lead reference; one team per user
-- **Team Members**: Join table with approval workflow (isApproved, isLead)
+- **Teams**: Name; one team per user; 3-4 members allowed
+- **Team Members**: Join table linking users to teams (direct join, no approval needed)
 - **Weeks**: Trivia rounds with week number, title, active/archived status
 - **Questions**: 10 questions per week with correct answers
 - **Submissions**: Team answers per week with grading status
@@ -74,14 +79,19 @@ The storage layer (`server/storage.ts`) provides a data access abstraction over 
 
 ## Recent Changes (January 2026)
 
-### Cache Invalidation Fix
-- Fixed leaderboard not showing newly created teams by adding cache invalidation for `/api/leaderboard` when teams are created
-- Leaderboard now properly displays all teams with 0 points immediately after team creation
+### Season 6 Updates
+- Changed from Season 10 to Season 6 branding throughout the app
+- Removed @wwt.com email restriction - open registration for WWT employees
+- Removed team lead approval workflow - users can directly join teams
+- Added team size cap: maximum 4 members per team
+- Added trophy eligibility rules: teams of 3 are eligible, teams of 4 are not
+- Any team member can now submit answers (not just team lead)
 
 ### Completed Features
-- User registration and login with @wwt.com email restriction
-- Team creation, joining, and approval workflow
-- Weekly trivia submission system (Team Leads only)
+- User registration and login (open to WWT employees)
+- Team creation with direct joining (no approval needed)
+- Team size limits with trophy eligibility display
+- Weekly trivia submission system (any team member)
 - Admin portal for managing weeks, questions, and grading
 - Leaderboard with real-time rankings
 - Archives for viewing past weeks' results

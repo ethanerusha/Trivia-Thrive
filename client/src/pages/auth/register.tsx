@@ -14,10 +14,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const registerSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  email: z.string().email("Please enter a valid email").refine(
-    (email) => email.endsWith("@wwt.com"),
-    "Only @wwt.com email addresses are allowed"
-  ),
+  email: z.string().email("Please enter a valid email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -49,7 +46,7 @@ export default function RegisterPage() {
       await register(data.email, data.password, data.name);
       toast({
         title: "Account created!",
-        description: "Welcome to Tuesday Trivia: Season 10!",
+        description: "Welcome to Tuesday Trivia: Season 6!",
       });
       setLocation("/dashboard");
     } catch (error) {
@@ -72,7 +69,7 @@ export default function RegisterPage() {
               <Trophy className="h-8 w-8 text-accent" />
             </div>
           </div>
-          <CardTitle className="text-2xl">Join Season 10</CardTitle>
+          <CardTitle className="text-2xl">Join Season 6</CardTitle>
           <CardDescription>
             Create your Tuesday Trivia account
           </CardDescription>
@@ -81,7 +78,7 @@ export default function RegisterPage() {
           <Alert className="mb-6 border-accent/30 bg-accent/5">
             <AlertCircle className="h-4 w-4 text-accent" />
             <AlertDescription className="text-sm">
-              Registration is only available for @wwt.com email addresses.
+              For WWT employees. Teams of 3 are ideal for trophy eligibility!
             </AlertDescription>
           </Alert>
           
@@ -113,7 +110,7 @@ export default function RegisterPage() {
                     <FormControl>
                       <Input
                         type="email"
-                        placeholder="you@wwt.com"
+                        placeholder="you@example.com"
                         data-testid="input-email"
                         {...field}
                       />

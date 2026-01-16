@@ -21,10 +21,10 @@ export default function LandingPage() {
             Tuesday Trivia
           </h1>
           <p className="text-2xl sm:text-3xl text-accent font-semibold italic mb-6">
-            Season 10
+            Season 6
           </p>
           <p className="text-lg sm:text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-            Where @wwt.com teams compete weekly for trivia glory. 
+            Where WWT teams compete weekly for trivia glory. 
             Form your team, answer questions, and climb the leaderboard!
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -34,7 +34,7 @@ export default function LandingPage() {
                 className="bg-accent text-accent-foreground hover:bg-accent/90 text-lg px-8 py-6 font-semibold"
                 data-testid="hero-register"
               >
-                Join Season 10
+                Join Season 6
               </Button>
             </Link>
             <Link href="/login">
@@ -60,7 +60,7 @@ export default function LandingPage() {
             <FeatureCard
               icon={Users}
               title="Form Your Team"
-              description="Create or join a team with your colleagues. Each team needs a Team Lead to submit answers."
+              description="Create or join a team with your colleagues. Teams of 3 are ideal for trophy eligibility!"
             />
             <FeatureCard
               icon={ClipboardList}
@@ -70,12 +70,12 @@ export default function LandingPage() {
             <FeatureCard
               icon={Award}
               title="Submit & Score"
-              description="Team Leads submit answers before the deadline. Earn points for each correct response."
+              description="Submit your team's answers before the deadline. Earn points for each correct response."
             />
             <FeatureCard
               icon={Trophy}
               title="Climb the Ranks"
-              description="Track your progress on the leaderboard and compete for Season 10 championship!"
+              description="Track your progress on the leaderboard and compete for Season 6 championship!"
             />
           </div>
         </div>
@@ -84,7 +84,7 @@ export default function LandingPage() {
       <footer className="bg-primary py-8 px-4">
         <div className="max-w-6xl mx-auto text-center">
           <p className="text-primary-foreground/70 text-sm">
-            Tuesday Trivia: Season 10 - Exclusively for @wwt.com employees
+            Tuesday Trivia: Season 6 - Exclusively for WWT employees
           </p>
         </div>
       </footer>

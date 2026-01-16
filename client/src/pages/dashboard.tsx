@@ -28,7 +28,7 @@ export default function DashboardPage() {
     enabled: !!myTeam && !!activeWeek,
   });
 
-  const isTeamLead = myTeam?.leadId === user?.id;
+  const canSubmit = !!myTeam;
   const myTeamRank = leaderboard?.find((e) => e.teamId === myTeam?.id);
 
   return (
@@ -39,7 +39,7 @@ export default function DashboardPage() {
             Welcome back, {user?.name?.split(" ")[0]}!
           </h1>
           <p className="text-muted-foreground mt-1">
-            Here's what's happening in Tuesday Trivia: Season 10
+            Here's what's happening in Tuesday Trivia: Season 6
           </p>
         </div>
 
@@ -56,10 +56,10 @@ export default function DashboardPage() {
                 <div>
                   <div className="text-2xl font-bold">{myTeam.name}</div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {myTeam.memberCount} member{myTeam.memberCount !== 1 ? "s" : ""}
-                    {isTeamLead && (
+                    {myTeam.memberCount}/4 members
+                    {myTeam.memberCount === 3 && (
                       <Badge variant="secondary" className="ml-2 bg-accent/10 text-accent">
-                        Team Lead
+                        Trophy Eligible
                       </Badge>
                     )}
                   </p>
@@ -166,18 +166,14 @@ export default function DashboardPage() {
                     <CheckCircle2 className="h-5 w-5" />
                     <span>Answers submitted</span>
                   </div>
-                ) : isTeamLead ? (
+                ) : canSubmit ? (
                   <Link href={`/submit/${activeWeek.id}`}>
                     <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" data-testid="button-submit-answers">
                       Submit Answers
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
-                ) : (
-                  <p className="text-muted-foreground text-sm">
-                    Only your Team Lead can submit answers
-                  </p>
-                )}
+                ) : null}
               </CardContent>
             </Card>
           )}
@@ -188,7 +184,7 @@ export default function DashboardPage() {
                 <Trophy className="h-5 w-5 text-accent" />
                 Top Teams
               </CardTitle>
-              <CardDescription>Season 10 Leaderboard</CardDescription>
+              <CardDescription>Season 6 Leaderboard</CardDescription>
             </CardHeader>
             <CardContent>
               {leaderboardLoading ? (

@@ -44,7 +44,7 @@ export default function SubmitPage() {
     enabled: !!weekId && !!myTeam,
   });
 
-  const isTeamLead = myTeam?.leadId === user?.id;
+  const hasTeam = !!myTeam;
 
   useEffect(() => {
     if (existingSubmission && (existingSubmission as any).answers) {
@@ -84,21 +84,21 @@ export default function SubmitPage() {
     },
   });
 
-  if (!isTeamLead) {
+  if (!hasTeam) {
     return (
       <div className="min-h-screen bg-background">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Access Restricted</h3>
+              <h3 className="text-lg font-semibold mb-2">Join a Team First</h3>
               <p className="text-muted-foreground text-center mb-4">
-                Only Team Leads can submit answers
+                You need to be on a team to submit answers
               </p>
-              <Link href="/dashboard">
+              <Link href="/teams">
                 <Button variant="outline">
                   <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Dashboard
+                  Browse Teams
                 </Button>
               </Link>
             </CardContent>

@@ -37,7 +37,7 @@ export default function LeaderboardPage() {
           <Trophy className="h-8 w-8 text-accent" />
           <div>
             <h1 className="text-3xl font-bold text-foreground">Leaderboard</h1>
-            <p className="text-muted-foreground">Season 10 Rankings</p>
+            <p className="text-muted-foreground">Season 6 Rankings</p>
           </div>
         </div>
 

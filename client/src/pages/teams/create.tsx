@@ -37,7 +37,7 @@ export default function CreateTeamPage() {
     onSuccess: () => {
       toast({
         title: "Team created!",
-        description: "You are now the Team Lead.",
+        description: "Your team is ready. Invite colleagues to join!",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
       queryClient.invalidateQueries({ queryKey: ["/api/teams/my-team"] });
@@ -125,26 +125,26 @@ export default function CreateTeamPage() {
           <Card className="md:col-span-2 bg-accent/5 border-accent/20">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
-                <Crown className="h-5 w-5 text-accent" />
-                Team Lead Benefits
+                <Users className="h-5 w-5 text-accent" />
+                Team Size Rules
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 text-sm">
               <div className="flex items-start gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-accent mt-2" />
-                <p>Submit answers on behalf of your team</p>
+                <p>Teams of 3 members are ideal and eligible for trophy</p>
               </div>
               <div className="flex items-start gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-accent mt-2" />
-                <p>Approve or reject team join requests</p>
+                <p>Teams of 4 can compete but are not trophy eligible</p>
               </div>
               <div className="flex items-start gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-accent mt-2" />
-                <p>Manage your team roster</p>
+                <p>Maximum team size is 4 members</p>
               </div>
               <div className="flex items-start gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-accent mt-2" />
-                <p>Lead your team to Season 10 victory!</p>
+                <p>Lead your team to Season 6 victory!</p>
               </div>
             </CardContent>
           </Card>

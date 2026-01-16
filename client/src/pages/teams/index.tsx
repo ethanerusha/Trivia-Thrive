@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Users, Crown, Plus, UserPlus } from "lucide-react";
+import { Users, Plus, UserPlus } from "lucide-react";
 import type { TeamWithMembers } from "@shared/schema";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -30,11 +30,12 @@ export default function TeamsPage() {
     },
     onSuccess: () => {
       toast({
-        title: "Join request sent!",
-        description: "The Team Lead will need to approve your request.",
+        title: "Joined team!",
+        description: "You are now a member of the team.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/teams"] });
       queryClient.invalidateQueries({ queryKey: ["/api/teams/my-team"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/leaderboard"] });
     },
     onError: (error: Error) => {
       toast({
@@ -61,7 +62,7 @@ export default function TeamsPage() {
           <div>
             <h1 className="text-3xl font-bold text-foreground">Team Directory</h1>
             <p className="text-muted-foreground mt-1">
-              Browse all Season 10 teams
+              Browse all Season 6 teams
             </p>
           </div>
           {!myTeam && (
@@ -93,9 +94,6 @@ export default function TeamsPage() {
             {teams.map((team) => {
               const isMyTeam = myTeam?.id === team.id;
               const approvedMembers = team.members.filter((m) => m.isApproved);
-              const hasPendingRequest = team.members.some(
-                (m) => m.userId === user?.id && !m.isApproved
-              );
 
               return (
                 <Card key={team.id} className={isMyTeam ? "border-accent" : ""}>
@@ -111,13 +109,16 @@ export default function TeamsPage() {
                           )}
                         </CardTitle>
                         <CardDescription className="flex items-center gap-1 mt-1">
-                          <Crown className="h-3 w-3 text-accent" />
-                          <span className="truncate">{team.lead.name}</span>
+                          <Users className="h-3 w-3" />
+                          <span>{approvedMembers.length}/4 members</span>
+                          {approvedMembers.length === 3 && (
+                            <Badge variant="secondary" className="text-xs ml-1">Trophy Eligible</Badge>
+                          )}
+                          {approvedMembers.length === 4 && (
+                            <Badge variant="outline" className="text-xs ml-1">Full</Badge>
+                          )}
                         </CardDescription>
                       </div>
-                      <Badge variant="secondary" className="flex-shrink-0">
-                        {approvedMembers.length} member{approvedMembers.length !== 1 ? "s" : ""}
-                      </Badge>
                     </div>
                   </CardHeader>
                   <CardContent>
@@ -136,7 +137,7 @@ export default function TeamsPage() {
                       )}
                     </div>
 
-                    {!myTeam && !hasPendingRequest && (
+                    {!myTeam && approvedMembers.length < 4 && (
                       <Button
                         variant="outline"
                         className="w-full"
@@ -145,12 +146,12 @@ export default function TeamsPage() {
                         data-testid={`button-join-${team.id}`}
                       >
                         <UserPlus className="h-4 w-4 mr-2" />
-                        Request to Join
+                        Join Team
                       </Button>
                     )}
-                    {hasPendingRequest && (
+                    {!myTeam && approvedMembers.length >= 4 && (
                       <Badge variant="secondary" className="w-full justify-center py-2">
-                        Pending Approval
+                        Team Full
                       </Badge>
                     )}
                     {isMyTeam && (
@@ -172,7 +173,7 @@ export default function TeamsPage() {
               <Users className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">No Teams Yet</h3>
               <p className="text-muted-foreground text-center mb-4">
-                Be the first to create a team for Season 10!
+                Be the first to create a team for Season 6!
               </p>
               <Link href="/teams/create">
                 <Button className="bg-accent text-accent-foreground hover:bg-accent/90" data-testid="button-create-first-team">

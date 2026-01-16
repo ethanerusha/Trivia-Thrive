@@ -49,7 +49,7 @@ export default function AdminDashboardPage() {
           <Shield className="h-8 w-8 text-accent" />
           <div>
             <h1 className="text-3xl font-bold text-foreground">Admin Portal</h1>
-            <p className="text-muted-foreground">Manage Tuesday Trivia: Season 10</p>
+            <p className="text-muted-foreground">Manage Tuesday Trivia: Season 6</p>
           </div>
         </div>
 

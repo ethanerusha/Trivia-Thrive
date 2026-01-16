@@ -41,7 +41,7 @@ export function Navbar() {
           <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2 flex-shrink-0">
             <Trophy className="h-6 w-6 text-accent" />
             <span className="font-bold text-lg text-primary-foreground">Tuesday Trivia</span>
-            <span className="text-accent italic text-sm hidden sm:inline">Season 10</span>
+            <span className="text-accent italic text-sm hidden sm:inline">Season 6</span>
           </Link>
 
           {user && (
