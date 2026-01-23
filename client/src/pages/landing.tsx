@@ -1,17 +1,12 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users, ClipboardList, Award } from "lucide-react";
-import heroImage from "@assets/generated_images/corporate_trivia_competition_hero.png";
 
 export default function LandingPage() {
   return (
     <div className="min-h-screen">
       <div className="relative h-[70vh] min-h-[500px] flex items-center justify-center overflow-hidden">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${heroImage})` }}
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/90 via-primary/85 to-primary/95" />
+        <div className="absolute inset-0 bg-gradient-to-b from-primary via-primary/95 to-primary" />
         
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
           <div className="flex flex-col items-center justify-center gap-4 mb-6">
