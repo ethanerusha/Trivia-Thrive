@@ -2,7 +2,6 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users, ClipboardList, Award } from "lucide-react";
 import heroImage from "@assets/generated_images/corporate_trivia_competition_hero.png";
-import wwtLogo from "@assets/images/wwt-logo.jpg";
 
 export default function LandingPage() {
   return (
@@ -16,7 +15,7 @@ export default function LandingPage() {
         
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
           <div className="flex flex-col items-center justify-center gap-4 mb-6">
-            <img src={wwtLogo} alt="World Wide Technology" className="h-16 w-auto rounded-lg shadow-lg" />
+            <img src="https://workforcecenter.slu.edu/images/partners/wwt.png" alt="World Wide Technology" className="h-16 w-auto rounded-lg shadow-lg" />
             <Trophy className="h-12 w-12 text-accent" />
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
