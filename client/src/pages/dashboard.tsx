@@ -5,8 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Trophy, Users, ClipboardList, Calendar, ArrowRight, AlertCircle, CheckCircle2 } from "lucide-react";
-import type { TeamWithMembers, Week, LeaderboardEntry } from "@shared/schema";
+import { Trophy, Users, ClipboardList, Calendar, ArrowRight, AlertCircle, CheckCircle2, Edit2, HelpCircle } from "lucide-react";
+import type { TeamWithMembers, Week, SubmissionWithAnswers } from "@shared/schema";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -19,17 +19,12 @@ export default function DashboardPage() {
     queryKey: ["/api/weeks/active"],
   });
 
-  const { data: leaderboard, isLoading: leaderboardLoading } = useQuery<LeaderboardEntry[]>({
-    queryKey: ["/api/leaderboard"],
-  });
-
-  const { data: mySubmission } = useQuery({
+  const { data: mySubmission, isLoading: submissionLoading } = useQuery<SubmissionWithAnswers | null>({
     queryKey: ["/api/submissions/my-team", activeWeek?.id],
     enabled: !!myTeam && !!activeWeek,
   });
 
   const canSubmit = !!myTeam;
-  const myTeamRank = leaderboard?.find((e) => e.teamId === myTeam?.id);
 
   return (
     <div className="min-h-screen bg-background">
@@ -57,7 +52,7 @@ export default function DashboardPage() {
                   <div className="text-2xl font-bold">{myTeam.name}</div>
                   <p className="text-xs text-muted-foreground mt-1">
                     {myTeam.memberCount}/4 members
-                    {myTeam.memberCount === 3 && (
+                    {myTeam.memberCount <= 3 && myTeam.memberCount >= 1 && (
                       <Badge variant="secondary" className="ml-2 bg-accent/10 text-accent">
                         Trophy Eligible
                       </Badge>
@@ -67,36 +62,6 @@ export default function DashboardPage() {
               ) : (
                 <div className="text-muted-foreground text-sm">
                   You're not on a team yet
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
-              <CardTitle className="text-sm font-medium">Leaderboard Rank</CardTitle>
-              <Trophy className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              {leaderboardLoading ? (
-                <Skeleton className="h-8 w-20" />
-              ) : myTeamRank ? (
-                <div>
-                  <div className="text-2xl font-bold">
-                    #{myTeamRank.rank}
-                    {myTeamRank.rank <= 3 && (
-                      <span className="ml-2 text-accent">
-                        {myTeamRank.rank === 1 ? "🥇" : myTeamRank.rank === 2 ? "🥈" : "🥉"}
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {myTeamRank.totalPoints} points total
-                  </p>
-                </div>
-              ) : (
-                <div className="text-muted-foreground text-sm">
-                  Join a team to compete
                 </div>
               )}
             </CardContent>
@@ -122,11 +87,36 @@ export default function DashboardPage() {
               )}
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 gap-2">
+              <CardTitle className="text-sm font-medium">Submission Status</CardTitle>
+              <ClipboardList className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              {submissionLoading || weekLoading ? (
+                <Skeleton className="h-8 w-24" />
+              ) : !activeWeek ? (
+                <div className="text-muted-foreground text-sm">
+                  No active week
+                </div>
+              ) : mySubmission ? (
+                <div className="flex items-center gap-2 text-success">
+                  <CheckCircle2 className="h-5 w-5" />
+                  <span className="font-semibold">Submitted</span>
+                </div>
+              ) : (
+                <div className="text-muted-foreground text-sm">
+                  Not submitted yet
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="space-y-6">
           {!myTeam && (
-            <Card className="md:col-span-2 border-accent/30">
+            <Card className="border-accent/30">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <AlertCircle className="h-5 w-5 text-accent" />
@@ -138,7 +128,7 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent className="flex flex-col sm:flex-row gap-4">
                 <Link href="/teams/create" className="flex-1">
-                  <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" data-testid="button-create-team">
+                  <Button className="w-full bg-accent text-accent-foreground" data-testid="button-create-team">
                     Create a Team
                   </Button>
                 </Link>
@@ -156,19 +146,51 @@ export default function DashboardPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ClipboardList className="h-5 w-5 text-accent" />
-                  Week {activeWeek.weekNumber} Submission
+                  Week {activeWeek.weekNumber}: {activeWeek.title}
                 </CardTitle>
-                <CardDescription>{activeWeek.title}</CardDescription>
+                <CardDescription>
+                  {mySubmission 
+                    ? `Submitted by ${mySubmission.submittedBy?.name || "a team member"} on ${new Date(mySubmission.submittedAt).toLocaleDateString()}`
+                    : "Submit your team's answers below"
+                  }
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 {mySubmission ? (
-                  <div className="flex items-center gap-2 text-success">
-                    <CheckCircle2 className="h-5 w-5" />
-                    <span>Answers submitted</span>
+                  <div className="space-y-4">
+                    <div className="bg-muted/50 rounded-lg p-4">
+                      <h4 className="font-semibold mb-3 flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-success" />
+                        Your Team's Answers
+                      </h4>
+                      <div className="space-y-3">
+                        {mySubmission.answers
+                          .sort((a, b) => a.question.questionNumber - b.question.questionNumber)
+                          .map((answer) => (
+                            <div key={answer.id} className="flex items-start gap-3 p-3 bg-background rounded-md border">
+                              <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-xs flex-shrink-0">
+                                {answer.question.questionNumber}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-muted-foreground mb-1">{answer.question.questionText}</p>
+                                <p className="font-medium">{answer.answerText || <span className="text-muted-foreground italic">No answer</span>}</p>
+                              </div>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                    <div className="flex gap-3">
+                      <Link href={`/submit/${activeWeek.id}`} className="flex-1">
+                        <Button variant="outline" className="w-full" data-testid="button-edit-submission">
+                          <Edit2 className="h-4 w-4 mr-2" />
+                          Edit Answers
+                        </Button>
+                      </Link>
+                    </div>
                   </div>
                 ) : canSubmit ? (
                   <Link href={`/submit/${activeWeek.id}`}>
-                    <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" data-testid="button-submit-answers">
+                    <Button className="w-full bg-accent text-accent-foreground" data-testid="button-submit-answers">
                       Submit Answers
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
@@ -178,57 +200,62 @@ export default function DashboardPage() {
             </Card>
           )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-accent" />
-                Top Teams
-              </CardTitle>
-              <CardDescription>Season 6 Leaderboard</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {leaderboardLoading ? (
-                <div className="space-y-2">
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              ) : leaderboard && leaderboard.length > 0 ? (
-                <div className="space-y-2">
-                  {leaderboard.slice(0, 5).map((entry) => (
-                    <div
-                      key={entry.teamId}
-                      className={`flex items-center justify-between p-2 rounded-md ${
-                        entry.rank === 1
-                          ? "bg-accent/10"
-                          : entry.rank <= 3
-                          ? "bg-muted/50"
-                          : ""
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="font-bold text-lg w-6 text-center">
-                          {entry.rank}
-                        </span>
-                        <span className="font-medium">{entry.teamName}</span>
-                      </div>
-                      <span className="font-bold text-accent">{entry.totalPoints}</span>
-                    </div>
-                  ))}
+          {myTeam && !activeWeek && (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">No Active Trivia Week</h3>
+                <p className="text-muted-foreground text-center mb-4">
+                  Check back later for the next round of questions!
+                </p>
+                <div className="flex gap-3">
                   <Link href="/leaderboard">
-                    <Button variant="ghost" className="w-full mt-2" data-testid="link-full-leaderboard">
-                      View Full Leaderboard
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                    <Button variant="outline">
+                      <Trophy className="h-4 w-4 mr-2" />
+                      View Leaderboard
+                    </Button>
+                  </Link>
+                  <Link href="/submissions">
+                    <Button variant="outline">
+                      <ClipboardList className="h-4 w-4 mr-2" />
+                      Past Submissions
                     </Button>
                   </Link>
                 </div>
-              ) : (
-                <p className="text-muted-foreground text-sm text-center py-4">
-                  No teams on the leaderboard yet
-                </p>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="grid gap-4 md:grid-cols-2">
+            <Link href="/leaderboard">
+              <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+                <CardContent className="flex items-center justify-between py-6">
+                  <div className="flex items-center gap-3">
+                    <Trophy className="h-8 w-8 text-accent" />
+                    <div>
+                      <p className="font-semibold">Leaderboard</p>
+                      <p className="text-sm text-muted-foreground">See team rankings</p>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                </CardContent>
+              </Card>
+            </Link>
+            <Link href="/archives">
+              <Card className="hover:bg-muted/50 transition-colors cursor-pointer">
+                <CardContent className="flex items-center justify-between py-6">
+                  <div className="flex items-center gap-3">
+                    <HelpCircle className="h-8 w-8 text-accent" />
+                    <div>
+                      <p className="font-semibold">Archives</p>
+                      <p className="text-sm text-muted-foreground">View past questions</p>
+                    </div>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-muted-foreground" />
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

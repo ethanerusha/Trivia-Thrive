@@ -105,7 +105,7 @@ export default function AdminLeaderboardPage() {
             <Button
               onClick={() => updateMutation.mutate()}
               disabled={updateMutation.isPending}
-              className="bg-accent text-accent-foreground hover:bg-accent/90"
+              className="bg-accent text-accent-foreground"
               data-testid="button-save-overrides"
             >
               {updateMutation.isPending ? (

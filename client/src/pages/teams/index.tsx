@@ -67,7 +67,7 @@ export default function TeamsPage() {
           </div>
           {!myTeam && (
             <Link href="/teams/create">
-              <Button className="bg-accent text-accent-foreground hover:bg-accent/90" data-testid="button-create-team">
+              <Button className="bg-accent text-accent-foreground" data-testid="button-create-team">
                 <Plus className="h-4 w-4 mr-2" />
                 Create Team
               </Button>
@@ -111,8 +111,8 @@ export default function TeamsPage() {
                         <CardDescription className="flex items-center gap-1 mt-1">
                           <Users className="h-3 w-3" />
                           <span>{approvedMembers.length}/4 members</span>
-                          {approvedMembers.length === 3 && (
-                            <Badge variant="secondary" className="text-xs ml-1">Trophy Eligible</Badge>
+                          {approvedMembers.length >= 1 && approvedMembers.length <= 3 && (
+                            <Badge variant="secondary" className="text-xs ml-1 bg-accent/10 text-accent">Trophy Eligible</Badge>
                           )}
                           {approvedMembers.length === 4 && (
                             <Badge variant="outline" className="text-xs ml-1">Full</Badge>
@@ -122,18 +122,19 @@ export default function TeamsPage() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex -space-x-2 mb-4">
-                      {approvedMembers.slice(0, 5).map((member) => (
-                        <Avatar key={member.id} className="h-8 w-8 border-2 border-background">
-                          <AvatarFallback className="text-xs bg-primary text-primary-foreground">
-                            {getInitials(member.user.name)}
-                          </AvatarFallback>
-                        </Avatar>
-                      ))}
-                      {approvedMembers.length > 5 && (
-                        <div className="h-8 w-8 rounded-full bg-muted border-2 border-background flex items-center justify-center text-xs font-medium">
-                          +{approvedMembers.length - 5}
+                    <div className="space-y-2 mb-4">
+                      {approvedMembers.map((member) => (
+                        <div key={member.id} className="flex items-center gap-2">
+                          <Avatar className="h-7 w-7">
+                            <AvatarFallback className="text-xs bg-primary text-primary-foreground">
+                              {getInitials(member.user.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm truncate">{member.user.name}</span>
                         </div>
+                      ))}
+                      {approvedMembers.length === 0 && (
+                        <p className="text-sm text-muted-foreground italic">No members yet</p>
                       )}
                     </div>
 
@@ -176,7 +177,7 @@ export default function TeamsPage() {
                 Be the first to create a team for Season 6!
               </p>
               <Link href="/teams/create">
-                <Button className="bg-accent text-accent-foreground hover:bg-accent/90" data-testid="button-create-first-team">
+                <Button className="bg-accent text-accent-foreground" data-testid="button-create-first-team">
                   <Plus className="h-4 w-4 mr-2" />
                   Create First Team
                 </Button>

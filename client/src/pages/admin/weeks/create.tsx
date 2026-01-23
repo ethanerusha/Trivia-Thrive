@@ -11,17 +11,19 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2, Loader2, Calendar } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Loader2, Calendar, Image } from "lucide-react";
 
 const questionSchema = z.object({
   questionText: z.string().min(1, "Question is required"),
   correctAnswer: z.string().min(1, "Answer is required"),
   maxPoints: z.coerce.number().min(1, "Points must be at least 1").max(10, "Points cannot exceed 10"),
+  imageUrl: z.string().optional(),
 });
 
 const createWeekSchema = z.object({
   weekNumber: z.coerce.number().min(1, "Week number must be at least 1"),
   title: z.string().min(1, "Title is required"),
+  introText: z.string().optional(),
   questions: z.array(questionSchema).length(10, "Exactly 10 questions are required"),
 });
 
@@ -36,7 +38,8 @@ export default function CreateWeekPage() {
     defaultValues: {
       weekNumber: 1,
       title: "",
-      questions: Array(10).fill(null).map(() => ({ questionText: "", correctAnswer: "", maxPoints: 1 })),
+      introText: "",
+      questions: Array(10).fill(null).map(() => ({ questionText: "", correctAnswer: "", maxPoints: 1, imageUrl: "" })),
     },
   });
 
@@ -92,28 +95,48 @@ export default function CreateWeekPage() {
               <CardHeader>
                 <CardTitle>Week Details</CardTitle>
               </CardHeader>
-              <CardContent className="grid gap-4 sm:grid-cols-2">
+              <CardContent className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="weekNumber"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Week Number</FormLabel>
+                        <FormControl>
+                          <Input type="number" min={1} data-testid="input-week-number" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="title"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Title</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Pop Culture Mania" data-testid="input-week-title" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 <FormField
                   control={form.control}
-                  name="weekNumber"
+                  name="introText"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Week Number</FormLabel>
+                      <FormLabel>Introduction Paragraph (Optional)</FormLabel>
                       <FormControl>
-                        <Input type="number" min={1} data-testid="input-week-number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="title"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Title</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Pop Culture Mania" data-testid="input-week-title" {...field} />
+                        <Textarea 
+                          placeholder="Add an intro message for this week's trivia..." 
+                          rows={3}
+                          data-testid="input-intro-text" 
+                          {...field} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -192,6 +215,26 @@ export default function CreateWeekPage() {
                         )}
                       />
                     </div>
+                    <FormField
+                      control={form.control}
+                      name={`questions.${index}.imageUrl`}
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-sm text-muted-foreground flex items-center gap-2">
+                            <Image className="h-4 w-4" />
+                            Image URL (Optional)
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="https://example.com/image.jpg"
+                              data-testid={`input-image-${index + 1}`}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
                   </div>
                 ))}
               </CardContent>
@@ -205,7 +248,7 @@ export default function CreateWeekPage() {
                   </p>
                   <Button
                     type="submit"
-                    className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90"
+                    className="w-full sm:w-auto bg-accent text-accent-foreground"
                     disabled={createMutation.isPending}
                     data-testid="button-create-week-submit"
                   >

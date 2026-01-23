@@ -157,7 +157,7 @@ export default function RegisterPage() {
               />
               <Button 
                 type="submit" 
-                className="w-full bg-accent text-accent-foreground hover:bg-accent/90" 
+                className="w-full bg-accent text-accent-foreground" 
                 disabled={isLoading}
                 data-testid="button-register"
               >

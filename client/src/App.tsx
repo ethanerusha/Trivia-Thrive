@@ -19,6 +19,7 @@ import ArchivesPage from "@/pages/archives";
 import SubmitPage from "@/pages/submit";
 import SubmissionsPage from "@/pages/submissions";
 import AdminDashboardPage from "@/pages/admin/index";
+import AllWeeksPage from "@/pages/admin/weeks/index";
 import CreateWeekPage from "@/pages/admin/weeks/create";
 import WeekDetailPage from "@/pages/admin/weeks/[weekId]";
 import GradePage from "@/pages/admin/grade";
@@ -156,6 +157,11 @@ function Router() {
       <Route path="/admin">
         <AdminRoute>
           <AdminDashboardPage />
+        </AdminRoute>
+      </Route>
+      <Route path="/admin/weeks">
+        <AdminRoute>
+          <AllWeeksPage />
         </AdminRoute>
       </Route>
       <Route path="/admin/weeks/create">

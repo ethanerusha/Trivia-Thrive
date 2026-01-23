@@ -2,9 +2,11 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import session from "express-session";
 import { storage } from "./storage";
-import { insertUserSchema, loginSchema, insertTeamSchema, insertWeekSchema } from "@shared/schema";
+import { db } from "./db";
+import { insertUserSchema, loginSchema, insertTeamSchema, insertWeekSchema, questions, answers } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
+import { eq } from "drizzle-orm";
 
 declare module "express-session" {
   interface SessionData {
@@ -307,9 +309,15 @@ export async function registerRoutes(
 
   app.post("/api/admin/weeks", requireAdmin, async (req, res) => {
     try {
-      const { weekNumber, title, questions: questionData } = req.body;
+      const { weekNumber, title, introText, questions: questionData } = req.body;
       
-      const week = await storage.createWeek({ weekNumber, title });
+      // Check if week number already exists
+      const existingWeek = await storage.getWeekByNumber(weekNumber);
+      if (existingWeek) {
+        return res.status(400).json({ message: `Week ${weekNumber} already exists. Please choose a different week number.` });
+      }
+      
+      const week = await storage.createWeek({ weekNumber, title, introText });
       
       for (let i = 0; i < questionData.length; i++) {
         await storage.createQuestion({
@@ -318,13 +326,90 @@ export async function registerRoutes(
           questionText: questionData[i].questionText,
           correctAnswer: questionData[i].correctAnswer,
           maxPoints: questionData[i].maxPoints || 1,
+          imageUrl: questionData[i].imageUrl || null,
         });
       }
 
       res.json(week);
+    } catch (error: any) {
+      console.error(error);
+      if (error?.code === "23505") {
+        return res.status(400).json({ message: "Week number already exists. Please choose a different number." });
+      }
+      res.status(500).json({ message: "Failed to create week. Please check your inputs and try again." });
+    }
+  });
+
+  app.put("/api/admin/weeks/:weekId", requireAdmin, async (req, res) => {
+    try {
+      const { weekNumber, title, introText, questions: questionData } = req.body;
+      const weekId = req.params.weekId;
+      
+      const existingWeek = await storage.getWeek(weekId);
+      if (!existingWeek) {
+        return res.status(404).json({ message: "Week not found" });
+      }
+      
+      // Check if changing to a week number that already exists (and isn't this week)
+      if (weekNumber !== existingWeek.weekNumber) {
+        const weekWithNumber = await storage.getWeekByNumber(weekNumber);
+        if (weekWithNumber) {
+          return res.status(400).json({ message: `Week ${weekNumber} already exists. Please choose a different week number.` });
+        }
+      }
+      
+      // Update week details
+      await storage.updateWeek(weekId, { weekNumber, title, introText });
+      
+      // Delete existing questions and recreate them
+      const weekSubmissions = await storage.getWeekSubmissions(weekId);
+      if (weekSubmissions.length === 0) {
+        // Only update questions if there are no submissions
+        // First delete old answers linked to old questions  
+        const existingQuestions = await storage.getWeekWithQuestions(weekId);
+        if (existingQuestions) {
+          for (const q of existingQuestions.questions) {
+            await db.delete(answers).where(eq(answers.questionId, q.id));
+          }
+          await db.delete(questions).where(eq(questions.weekId, weekId));
+        }
+        
+        // Create new questions
+        for (let i = 0; i < questionData.length; i++) {
+          await storage.createQuestion({
+            weekId,
+            questionNumber: i + 1,
+            questionText: questionData[i].questionText,
+            correctAnswer: questionData[i].correctAnswer,
+            maxPoints: questionData[i].maxPoints || 1,
+            imageUrl: questionData[i].imageUrl || null,
+          });
+        }
+      }
+      
+      const updatedWeek = await storage.getWeekWithQuestions(weekId);
+      res.json(updatedWeek);
+    } catch (error: any) {
+      console.error(error);
+      if (error?.code === "23505") {
+        return res.status(400).json({ message: "Week number already exists. Please choose a different number." });
+      }
+      res.status(500).json({ message: "Failed to update week. Please try again." });
+    }
+  });
+
+  app.delete("/api/admin/weeks/:weekId", requireAdmin, async (req, res) => {
+    try {
+      const week = await storage.getWeek(req.params.weekId);
+      if (!week) {
+        return res.status(404).json({ message: "Week not found" });
+      }
+      
+      await storage.deleteWeek(req.params.weekId);
+      res.json({ message: "Week deleted successfully" });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Failed to create week" });
+      res.status(500).json({ message: "Failed to delete week. Please try again." });
     }
   });
 

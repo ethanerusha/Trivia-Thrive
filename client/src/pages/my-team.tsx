@@ -76,7 +76,7 @@ export default function MyTeamPage() {
               </p>
               <div className="flex gap-4">
                 <Link href="/teams/create">
-                  <Button className="bg-accent text-accent-foreground hover:bg-accent/90" data-testid="button-create-team">
+                  <Button className="bg-accent text-accent-foreground" data-testid="button-create-team">
                     Create Team
                   </Button>
                 </Link>
@@ -175,7 +175,7 @@ export default function MyTeamPage() {
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      className="bg-destructive text-destructive-foreground"
                       onClick={() => leaveMutation.mutate()}
                     >
                       Leave Team

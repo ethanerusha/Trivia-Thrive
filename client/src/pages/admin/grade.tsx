@@ -155,7 +155,7 @@ export default function GradePage() {
           <Button
             onClick={() => gradeMutation.mutate()}
             disabled={gradeMutation.isPending}
-            className="bg-accent text-accent-foreground hover:bg-accent/90"
+            className="bg-accent text-accent-foreground"
             data-testid="button-save-grades"
           >
             {gradeMutation.isPending ? (

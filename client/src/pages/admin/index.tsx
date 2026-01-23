@@ -117,7 +117,7 @@ export default function AdminDashboardPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <Link href="/admin/weeks/create">
-                <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" data-testid="button-create-week">
+                <Button className="w-full bg-accent text-accent-foreground" data-testid="button-create-week">
                   <Plus className="h-4 w-4 mr-2" />
                   Create New Week
                 </Button>

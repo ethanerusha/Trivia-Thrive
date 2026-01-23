@@ -191,15 +191,32 @@ export default function SubmitPage() {
           </Card>
         )}
 
+        {week.introText && (
+          <Card className="mb-6 bg-muted/30">
+            <CardContent className="py-4">
+              <p className="text-foreground italic">{week.introText}</p>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="space-y-6 mb-8">
           {sortedQuestions.map((question) => (
             <Card key={question.id}>
               <CardHeader className="pb-3">
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold flex-shrink-0">
                     {question.questionNumber}
                   </div>
-                  <CardTitle className="text-lg">{question.questionText}</CardTitle>
+                  <div className="flex-1">
+                    <CardTitle className="text-lg">{question.questionText}</CardTitle>
+                    {question.imageUrl && (
+                      <img 
+                        src={question.imageUrl} 
+                        alt={`Question ${question.questionNumber}`}
+                        className="mt-3 max-w-full h-auto rounded-lg max-h-64 object-contain"
+                      />
+                    )}
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -230,7 +247,7 @@ export default function SubmitPage() {
               <AlertDialog>
                 <AlertDialogTrigger asChild>
                   <Button
-                    className="w-full sm:w-auto bg-accent text-accent-foreground hover:bg-accent/90"
+                    className="w-full sm:w-auto bg-accent text-accent-foreground"
                     disabled={!allAnswered || submitMutation.isPending}
                     data-testid="button-submit-answers"
                   >
@@ -257,7 +274,7 @@ export default function SubmitPage() {
                   <AlertDialogFooter>
                     <AlertDialogCancel>Review Answers</AlertDialogCancel>
                     <AlertDialogAction
-                      className="bg-accent text-accent-foreground hover:bg-accent/90"
+                      className="bg-accent text-accent-foreground"
                       onClick={() => submitMutation.mutate()}
                     >
                       Submit

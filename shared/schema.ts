@@ -62,6 +62,7 @@ export const weeks = pgTable("weeks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   weekNumber: integer("week_number").notNull().unique(),
   title: text("title").notNull(),
+  introText: text("intro_text"),
   isActive: boolean("is_active").default(false).notNull(),
   isGraded: boolean("is_graded").default(false).notNull(),
   isPublished: boolean("is_published").default(false).notNull(),
@@ -80,6 +81,7 @@ export const questions = pgTable("questions", {
   questionText: text("question_text").notNull(),
   correctAnswer: text("correct_answer").notNull(),
   maxPoints: integer("max_points").default(1).notNull(),
+  imageUrl: text("image_url"),
 });
 
 export const questionsRelations = relations(questions, ({ one, many }) => ({

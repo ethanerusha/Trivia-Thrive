@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users, ClipboardList, Award } from "lucide-react";
 import heroImage from "@assets/generated_images/corporate_trivia_competition_hero.png";
+import wwtLogo from "@assets/images/wwt-logo.jpg";
 
 export default function LandingPage() {
   return (
@@ -14,7 +15,8 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-gradient-to-b from-primary/90 via-primary/85 to-primary/95" />
         
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-          <div className="flex items-center justify-center gap-3 mb-6">
+          <div className="flex flex-col items-center justify-center gap-4 mb-6">
+            <img src={wwtLogo} alt="World Wide Technology" className="h-16 w-auto rounded-lg shadow-lg" />
             <Trophy className="h-12 w-12 text-accent" />
           </div>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-4">
@@ -31,7 +33,7 @@ export default function LandingPage() {
             <Link href="/register">
               <Button 
                 size="lg" 
-                className="bg-accent text-accent-foreground hover:bg-accent/90 text-lg px-8 py-6 font-semibold"
+                className="bg-accent text-accent-foreground border-accent-border"
                 data-testid="hero-register"
               >
                 Join Season 6
@@ -41,7 +43,7 @@ export default function LandingPage() {
               <Button 
                 size="lg" 
                 variant="outline" 
-                className="text-lg px-8 py-6 border-white/30 text-white bg-white/10 backdrop-blur-sm hover:bg-white/20"
+                className="border-white/30 text-white bg-white/10 backdrop-blur-sm"
                 data-testid="hero-login"
               >
                 Sign In

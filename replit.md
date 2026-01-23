@@ -50,8 +50,8 @@ The storage layer (`server/storage.ts`) provides a data access abstraction over 
 - **Users**: Email, password, name, admin status, verification status
 - **Teams**: Name; one team per user; 3-4 members allowed
 - **Team Members**: Join table linking users to teams (direct join, no approval needed)
-- **Weeks**: Trivia rounds with week number, title, active/archived status
-- **Questions**: 10 questions per week with correct answers and configurable `maxPoints` (1-10)
+- **Weeks**: Trivia rounds with week number, title, `introText` (optional intro paragraph), active/archived status
+- **Questions**: 10 questions per week with correct answers, configurable `maxPoints` (1-10), and optional `imageUrl`
 - **Submissions**: Team answers per week with grading status, tracks `submittedById` to show who submitted
 - **Answers**: Individual question responses with `pointsAwarded` (0 to question's maxPoints)
 
@@ -92,12 +92,16 @@ The storage layer (`server/storage.ts`) provides a data access abstraction over 
 - **Password reset flow**: Forgot password page with admin contact fallback
 - Team creation with direct joining (no approval needed)
 - Team size limits with trophy eligibility display (1-3 members eligible, 4 not)
+- **Team directory**: Shows team member names and trophy eligibility for each team
 - Weekly trivia submission system (any team member can submit/edit until week closed)
 - **Submission tracking**: Shows which team member submitted answers and when
 - **Configurable point values**: Each question can have 1-10 max points (e.g., 0/1 for simple, 0-3 for complex)
+- **Week intro text**: Optional introduction paragraph displayed on submit page
+- **Question images**: Optional image URL for each question displayed on submit page
 - **Enhanced grading**: Admin can award 0 to maxPoints per question with slider and quick-select buttons
 - **Admin can view submissions while week is active** (not just after deactivation)
 - **Detailed results view**: Shows points earned vs max possible, with color-coded full/partial/wrong indicators
+- **Enhanced dashboard**: Displays team submissions with questions and answers prominently
 - Admin portal for managing weeks, questions, and grading
 - **Enhanced leaderboard**: Shows per-week scores across columns before total
 - Archives for viewing past weeks' results

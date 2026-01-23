@@ -33,12 +33,14 @@ export interface IStorage {
   
   // Weeks
   getWeek(id: string): Promise<Week | undefined>;
+  getWeekByNumber(weekNumber: number): Promise<Week | undefined>;
   getWeekWithQuestions(id: string): Promise<WeekWithQuestions | undefined>;
   getAllWeeks(): Promise<Week[]>;
   getActiveWeek(): Promise<Week | undefined>;
   getArchivedWeeks(): Promise<WeekWithQuestions[]>;
   createWeek(week: InsertWeek): Promise<Week>;
   updateWeek(id: string, data: Partial<Week>): Promise<void>;
+  deleteWeek(id: string): Promise<void>;
   
   // Questions
   createQuestion(question: InsertQuestion): Promise<Question>;
@@ -197,6 +199,11 @@ export class DatabaseStorage implements IStorage {
     return week || undefined;
   }
 
+  async getWeekByNumber(weekNumber: number): Promise<Week | undefined> {
+    const [week] = await db.select().from(weeks).where(eq(weeks.weekNumber, weekNumber));
+    return week || undefined;
+  }
+
   async getWeekWithQuestions(id: string): Promise<WeekWithQuestions | undefined> {
     const [week] = await db.select().from(weeks).where(eq(weeks.id, id));
     if (!week) return undefined;
@@ -236,6 +243,20 @@ export class DatabaseStorage implements IStorage {
 
   async updateWeek(id: string, data: Partial<Week>): Promise<void> {
     await db.update(weeks).set(data).where(eq(weeks.id, id));
+  }
+
+  async deleteWeek(id: string): Promise<void> {
+    // Delete all answers for submissions in this week
+    const weekSubmissions = await db.select().from(submissions).where(eq(submissions.weekId, id));
+    for (const sub of weekSubmissions) {
+      await db.delete(answers).where(eq(answers.submissionId, sub.id));
+    }
+    // Delete submissions
+    await db.delete(submissions).where(eq(submissions.weekId, id));
+    // Delete questions
+    await db.delete(questions).where(eq(questions.weekId, id));
+    // Delete week
+    await db.delete(weeks).where(eq(weeks.id, id));
   }
 
   // Questions
