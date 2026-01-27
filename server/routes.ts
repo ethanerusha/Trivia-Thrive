@@ -60,10 +60,15 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Email already registered" });
       }
 
+      // Check if this is the first user - make them admin automatically
+      const userCount = await storage.getUserCount();
+      const isFirstUser = userCount === 0;
+
       const hashedPassword = await bcrypt.hash(data.password, 10);
       const user = await storage.createUser({
         ...data,
         password: hashedPassword,
+        isAdmin: isFirstUser,
       });
 
       req.session.userId = user.id;
