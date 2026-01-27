@@ -65,11 +65,15 @@ export async function registerRoutes(
       const isFirstUser = userCount === 0;
 
       const hashedPassword = await bcrypt.hash(data.password, 10);
-      const user = await storage.createUser({
+      let user = await storage.createUser({
         ...data,
         password: hashedPassword,
-        isAdmin: isFirstUser,
       });
+
+      // Make first user an admin
+      if (isFirstUser) {
+        user = await storage.updateUser(user.id, { isAdmin: true }) || user;
+      }
 
       req.session.userId = user.id;
       res.json({ user: { ...user, password: undefined } });
