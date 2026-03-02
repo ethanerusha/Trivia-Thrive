@@ -1,0 +1,82 @@
+
+1️⃣ Archive Should Show Team Submissions
+Problem:
+In the archive, teams can only see correct answers. They cannot see what they submitted.
+Requirements:
+	• In the archive view for a past week: 
+		○ Show: 
+			§ Question
+			§ Correct answer
+			§ The logged-in user’s team submission
+			§ Whether that submission was correct
+	• This should only show that team’s own submissions.
+	• Do not expose other teams’ answers.
+	• If a team did not submit, display: "No submission".
+Update backend queries and frontend rendering accordingly.
+
+2️⃣ Hall of Fame + Champion Badge
+Requirements:
+A. Hall of Fame Page
+	• Add new route: /hall-of-fame
+	• Display: 
+		○ Year
+		○ Season (if applicable)
+		○ Champion team
+		○ Winning score
+	• Pull from historical weekly/season data.
+	• Admin can update this information on their page
+B. Crown Badge
+	• If a team has ever won: 
+		○ Show a 👑 icon next to their team name on: 
+			§ Teams page
+			§ Team profile
+	• This must be dynamic (based on DB history, not hardcoded).
+Add necessary database fields if needed.
+
+3️⃣ Countdown Timer (1 Week Deadline)
+Requirements:
+	• Each week has: 
+		○ release_date
+		○ Submission deadline = set by admin when questions are released
+	• On the answers/submission page: 
+		○ Show live countdown timer: 
+			§ Days
+			§ Hours
+			§ Minutes
+			§ Seconds
+	• If deadline passes: 
+		○ Disable submission
+		○ Show: “Submissions Closed”
+	• Timer should: 
+		○ Be accurate on refresh
+		○ Not rely solely on frontend time
+
+4️⃣ Automated Emails
+A. New Week Email
+	• When a new week is released: 
+		○ Send email to all team members: 
+			§ Subject: "New Trivia Week is Live!"
+			§ Include link to submit
+B. 1-Day Reminder
+	• If a team has NOT submitted
+	• And there is 1 day remaining
+	• Automatically send reminder email
+Implementation requirements:
+	• Use existing email system (identify in codebase)
+	• If none exists, integrate a simple email service cleanly
+	• Use scheduled job or background worker
+	• Must not send duplicates
+
+5️⃣ Admin Weekly Score Editing
+Problem:
+Currently cannot edit weekly scores after week closes.
+Requirements:
+	• Admin-only page: 
+		○ Select week
+		○ Select team
+		○ Edit weekly score
+		○ Save changes
+	• Changes should: 
+		○ Recalculate season totals automatically
+		○ Log who made the edit (audit log)
+	• Only accessible to admin role.
