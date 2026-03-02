@@ -8,8 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
-import { Users, Trophy } from "lucide-react";
-import type { TeamWithMembers } from "@shared/schema";
+import { Users, Trophy, Crown } from "lucide-react";
+import type { TeamWithMembers, Champion } from "@shared/schema";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +29,12 @@ export default function MyTeamPage() {
   const { data: myTeam, isLoading } = useQuery<TeamWithMembers | null>({
     queryKey: ["/api/teams/my-team"],
   });
+
+  const { data: champions } = useQuery<Champion[]>({
+    queryKey: ["/api/champions"],
+  });
+
+  const isChampionTeam = myTeam ? champions?.some((c) => c.teamName === myTeam.name) : false;
 
   const leaveMutation = useMutation({
     mutationFn: async () => {
@@ -103,6 +109,9 @@ export default function MyTeamPage() {
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center gap-3 flex-wrap">
               {myTeam.name}
+              {isChampionTeam && (
+                <Crown className="h-6 w-6 text-accent" data-testid="icon-crown-my-team" />
+              )}
               {isTrophyEligible && (
                 <Badge className="bg-accent text-accent-foreground">
                   Trophy Eligible

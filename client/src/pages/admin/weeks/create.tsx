@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2, Loader2, Calendar, Image } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Loader2, Calendar, Image, Clock } from "lucide-react";
 
 const questionSchema = z.object({
   questionText: z.string().min(1, "Question is required"),
@@ -24,6 +24,7 @@ const createWeekSchema = z.object({
   weekNumber: z.coerce.number().min(1, "Week number must be at least 1"),
   title: z.string().min(1, "Title is required"),
   introText: z.string().optional(),
+  deadline: z.string().optional(),
   questions: z.array(questionSchema).length(10, "Exactly 10 questions are required"),
 });
 
@@ -39,6 +40,7 @@ export default function CreateWeekPage() {
       weekNumber: 1,
       title: "",
       introText: "",
+      deadline: "",
       questions: Array(10).fill(null).map(() => ({ questionText: "", correctAnswer: "", maxPoints: 1, imageUrl: "" })),
     },
   });
@@ -136,6 +138,26 @@ export default function CreateWeekPage() {
                           rows={3}
                           data-testid="input-intro-text" 
                           {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="deadline"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        Submission Deadline (Optional)
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          type="datetime-local"
+                          data-testid="input-deadline"
+                          {...field}
                         />
                       </FormControl>
                       <FormMessage />

@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import session from "express-session";
 import { storage } from "./storage";
 import { db } from "./db";
-import { insertUserSchema, loginSchema, insertTeamSchema, insertWeekSchema, questions, answers } from "@shared/schema";
+import { insertUserSchema, loginSchema, insertTeamSchema, insertWeekSchema, insertChampionSchema, questions, answers } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
@@ -234,6 +234,21 @@ export async function registerRoutes(
     res.json(weeks);
   });
 
+  app.get("/api/weeks/archived/with-submissions", requireAuth, async (req, res) => {
+    try {
+      const member = await storage.getTeamMember(req.session.userId!);
+      if (!member || !member.isApproved) {
+        const archivedWeeks = await storage.getArchivedWeeks();
+        return res.json(archivedWeeks.map(w => ({ ...w, teamSubmission: null })));
+      }
+      const weeksWithSubmissions = await storage.getArchivedWeeksWithSubmissions(member.teamId);
+      res.json(weeksWithSubmissions);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to fetch archived weeks" });
+    }
+  });
+
   app.get("/api/weeks/:weekId", requireAuth, async (req, res) => {
     const week = await storage.getWeekWithQuestions(req.params.weekId);
     if (!week) {
@@ -273,6 +288,10 @@ export async function registerRoutes(
       const week = await storage.getWeek(weekId);
       if (!week || !week.isActive) {
         return res.status(400).json({ message: "Week is not accepting submissions" });
+      }
+
+      if (week.deadline && new Date(week.deadline) < new Date()) {
+        return res.status(400).json({ message: "The submission deadline has passed" });
       }
 
       let submission = await storage.getSubmission(member.teamId, weekId);
@@ -318,7 +337,7 @@ export async function registerRoutes(
 
   app.post("/api/admin/weeks", requireAdmin, async (req, res) => {
     try {
-      const { weekNumber, title, introText, questions: questionData } = req.body;
+      const { weekNumber, title, introText, deadline, questions: questionData } = req.body;
       
       // Check if week number already exists
       const existingWeek = await storage.getWeekByNumber(weekNumber);
@@ -326,7 +345,7 @@ export async function registerRoutes(
         return res.status(400).json({ message: `Week ${weekNumber} already exists. Please choose a different week number.` });
       }
       
-      const week = await storage.createWeek({ weekNumber, title, introText });
+      const week = await storage.createWeek({ weekNumber, title, introText, deadline: deadline ? new Date(deadline) : null });
       
       for (let i = 0; i < questionData.length; i++) {
         await storage.createQuestion({
@@ -351,7 +370,7 @@ export async function registerRoutes(
 
   app.put("/api/admin/weeks/:weekId", requireAdmin, async (req, res) => {
     try {
-      const { weekNumber, title, introText, questions: questionData } = req.body;
+      const { weekNumber, title, introText, deadline, questions: questionData } = req.body;
       const weekId = req.params.weekId;
       
       const existingWeek = await storage.getWeek(weekId);
@@ -368,7 +387,7 @@ export async function registerRoutes(
       }
       
       // Update week details
-      await storage.updateWeek(weekId, { weekNumber, title, introText });
+      await storage.updateWeek(weekId, { weekNumber, title, introText, deadline: deadline ? new Date(deadline) : null });
       
       // Delete existing questions and recreate them
       const weekSubmissions = await storage.getWeekSubmissions(weekId);
@@ -447,31 +466,52 @@ export async function registerRoutes(
 
   app.post("/api/admin/weeks/:weekId/grade", requireAdmin, async (req, res) => {
     try {
-      const { grades } = req.body;
+      const { grades, reason } = req.body;
       
-      // Get week with questions to validate maxPoints
       const week = await storage.getWeekWithQuestions(req.params.weekId);
       if (!week) {
         return res.status(404).json({ message: "Week not found" });
       }
+
+      const isRegrade = week.isGraded || week.isPublished;
       
-      // Get all submissions to map answer IDs to question maxPoints
+      if (isRegrade && !reason) {
+        return res.status(400).json({ message: "A reason is required when re-grading a published or graded week" });
+      }
+      
       const submissions = await storage.getWeekSubmissions(req.params.weekId);
       const answerToMaxPoints: Record<string, number> = {};
+      const answerToOldPoints: Record<string, string> = {};
+      const answerToSubmissionId: Record<string, string> = {};
+      const answerToQuestionId: Record<string, string> = {};
       for (const submission of submissions) {
         for (const answer of submission.answers) {
           answerToMaxPoints[answer.id] = answer.question.maxPoints || 1;
+          answerToOldPoints[answer.id] = answer.pointsAwarded?.toString() || "0";
+          answerToSubmissionId[answer.id] = submission.id;
+          answerToQuestionId[answer.id] = answer.questionId;
         }
       }
       
-      // Apply grades with clamping to valid range
       for (const grade of grades) {
         const maxPoints = answerToMaxPoints[grade.answerId] || 1;
         const clampedPoints = Math.max(0, Math.min(grade.points, maxPoints));
+        const oldPoints = answerToOldPoints[grade.answerId] || "0";
+        
+        if (isRegrade && parseFloat(oldPoints) !== clampedPoints) {
+          await storage.createScoreEdit({
+            submissionId: answerToSubmissionId[grade.answerId],
+            questionId: answerToQuestionId[grade.answerId],
+            oldPoints: oldPoints,
+            newPoints: clampedPoints.toString(),
+            reason: reason || "",
+            editedById: req.session.userId!,
+          });
+        }
+        
         await storage.updateAnswer(grade.answerId, { pointsAwarded: clampedPoints.toString() });
       }
 
-      // Calculate total points per submission
       for (const submission of submissions) {
         const total = submission.answers.reduce((sum, answer) => {
           const grade = grades.find((g: any) => g.answerId === answer.id);
@@ -480,7 +520,7 @@ export async function registerRoutes(
             const clampedPoints = Math.max(0, Math.min(grade.points, maxPoints));
             return sum + clampedPoints;
           }
-          return sum;
+          return sum + parseFloat(answer.pointsAwarded?.toString() || "0");
         }, 0);
         await storage.updateSubmission(submission.id, { 
           isGraded: true, 
@@ -496,6 +536,11 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin/score-edits/:weekId", requireAdmin, async (req, res) => {
+    const edits = await storage.getScoreEditsByWeek(req.params.weekId);
+    res.json(edits);
+  });
+
   app.post("/api/admin/weeks/:weekId/publish", requireAdmin, async (req, res) => {
     await storage.updateWeek(req.params.weekId, { isPublished: true });
     res.json({ message: "Scores published" });
@@ -509,6 +554,58 @@ export async function registerRoutes(
   app.post("/api/admin/leaderboard/recalculate", requireAdmin, async (req, res) => {
     // Leaderboard is calculated dynamically from submissions
     res.json({ message: "Leaderboard recalculated" });
+  });
+
+  // ===== CHAMPIONS ROUTES =====
+  app.get("/api/champions", async (req, res) => {
+    const allChampions = await storage.getAllChampions();
+    res.json(allChampions);
+  });
+
+  app.post("/api/admin/champions", requireAdmin, async (req, res) => {
+    try {
+      const data = insertChampionSchema.parse(req.body);
+      const champion = await storage.createChampion(data);
+      res.json(champion);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error(error);
+      res.status(500).json({ message: "Failed to create champion entry" });
+    }
+  });
+
+  app.put("/api/admin/champions/:id", requireAdmin, async (req, res) => {
+    try {
+      const existing = await storage.getChampion(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ message: "Champion entry not found" });
+      }
+      const data = insertChampionSchema.partial().parse(req.body);
+      const champion = await storage.updateChampion(req.params.id, data);
+      res.json(champion);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0].message });
+      }
+      console.error(error);
+      res.status(500).json({ message: "Failed to update champion entry" });
+    }
+  });
+
+  app.delete("/api/admin/champions/:id", requireAdmin, async (req, res) => {
+    try {
+      const existing = await storage.getChampion(req.params.id);
+      if (!existing) {
+        return res.status(404).json({ message: "Champion entry not found" });
+      }
+      await storage.deleteChampion(req.params.id);
+      res.json({ message: "Champion entry deleted" });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to delete champion entry" });
+    }
   });
 
   return httpServer;

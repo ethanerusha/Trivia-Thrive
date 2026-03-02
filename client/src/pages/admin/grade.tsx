@@ -8,9 +8,10 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, CheckCircle2, Loader2, Users } from "lucide-react";
-import type { SubmissionWithAnswers, WeekWithQuestions } from "@shared/schema";
+import { ArrowLeft, CheckCircle2, Loader2, Users, History, AlertTriangle } from "lucide-react";
+import type { SubmissionWithAnswers, WeekWithQuestions, ScoreEditWithDetails } from "@shared/schema";
 
 export default function GradePage() {
   const { weekId } = useParams();
@@ -19,6 +20,7 @@ export default function GradePage() {
 
   const [grades, setGrades] = useState<Record<string, number>>({});
   const [selectedSubmission, setSelectedSubmission] = useState<string | null>(null);
+  const [reason, setReason] = useState("");
 
   const { data: week, isLoading: weekLoading } = useQuery<WeekWithQuestions>({
     queryKey: ["/api/weeks", weekId],
@@ -27,6 +29,12 @@ export default function GradePage() {
   const { data: submissions, isLoading: submissionsLoading } = useQuery<SubmissionWithAnswers[]>({
     queryKey: ["/api/admin/submissions", weekId],
   });
+
+  const { data: scoreEdits } = useQuery<ScoreEditWithDetails[]>({
+    queryKey: ["/api/admin/score-edits", weekId],
+  });
+
+  const isRegrade = week?.isGraded || week?.isPublished;
 
   useEffect(() => {
     if (submissions && submissions.length > 0) {
@@ -49,16 +57,24 @@ export default function GradePage() {
         answerId,
         points,
       }));
-      return await apiRequest("POST", `/api/admin/weeks/${weekId}/grade`, { grades: gradeData });
+      return await apiRequest("POST", `/api/admin/weeks/${weekId}/grade`, { 
+        grades: gradeData,
+        reason: isRegrade ? reason : undefined,
+      });
     },
     onSuccess: () => {
       toast({
         title: "Grading saved!",
-        description: "All submissions have been graded.",
+        description: isRegrade ? "Scores have been updated and changes logged." : "All submissions have been graded.",
       });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/submissions", weekId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/score-edits", weekId] });
       queryClient.invalidateQueries({ queryKey: ["/api/weeks"] });
-      setLocation(`/admin/weeks/${weekId}`);
+      queryClient.invalidateQueries({ queryKey: ["/api/leaderboard"] });
+      setReason("");
+      if (!isRegrade) {
+        setLocation(`/admin/weeks/${weekId}`);
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -147,14 +163,22 @@ export default function GradePage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">
-              Grade Week {week.weekNumber}
+            <h1 className="text-3xl font-bold text-foreground" data-testid="text-grade-title">
+              {isRegrade ? "Re-grade" : "Grade"} Week {week.weekNumber}
             </h1>
             <p className="text-muted-foreground">{week.title}</p>
+            {isRegrade && (
+              <div className="flex items-center gap-2 mt-2">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                <span className="text-sm text-amber-600 dark:text-amber-400">
+                  This week has already been {week.isPublished ? "published" : "graded"}. Changes will be logged.
+                </span>
+              </div>
+            )}
           </div>
           <Button
             onClick={() => gradeMutation.mutate()}
-            disabled={gradeMutation.isPending}
+            disabled={gradeMutation.isPending || (isRegrade && !reason.trim())}
             className="bg-accent text-accent-foreground"
             data-testid="button-save-grades"
           >
@@ -166,11 +190,31 @@ export default function GradePage() {
             ) : (
               <>
                 <CheckCircle2 className="mr-2 h-4 w-4" />
-                Save All Grades
+                {isRegrade ? "Save Re-grade" : "Save All Grades"}
               </>
             )}
           </Button>
         </div>
+
+        {isRegrade && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="text-base">Reason for Re-grade</CardTitle>
+              <CardDescription>
+                A reason is required when editing grades on a previously graded or published week.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Textarea
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Enter the reason for this score change..."
+                className="resize-none"
+                data-testid="input-regrade-reason"
+              />
+            </CardContent>
+          </Card>
+        )}
 
         <Tabs value={selectedSubmission || undefined} onValueChange={setSelectedSubmission}>
           <TabsList className="mb-6 flex-wrap h-auto gap-1">
@@ -204,8 +248,8 @@ export default function GradePage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   {sortedAnswers.map((answer) => (
-                    <div key={answer.id} className="border rounded-lg overflow-hidden">
-                      <div className="bg-muted/50 px-4 py-2 flex items-center justify-between">
+                    <div key={answer.id} className="border rounded-md overflow-hidden">
+                      <div className="bg-muted/50 px-4 py-2 flex items-center justify-between gap-2 flex-wrap">
                         <span className="font-medium">Question {answer.question.questionNumber}</span>
                         <Badge variant="outline">
                           {(grades[answer.id] || 0).toFixed(1)} pt
@@ -216,11 +260,11 @@ export default function GradePage() {
                           <p className="text-sm font-medium text-muted-foreground mb-1">Question</p>
                           <p className="mb-3">{answer.question.questionText}</p>
                           <p className="text-sm font-medium text-muted-foreground mb-1">Team Answer</p>
-                          <p className="p-2 bg-muted/50 rounded">{answer.answerText}</p>
+                          <p className="p-2 bg-muted/50 rounded-md">{answer.answerText}</p>
                         </div>
                         <div>
                           <p className="text-sm font-medium text-muted-foreground mb-1">Correct Answer</p>
-                          <p className="p-2 bg-accent/10 rounded text-accent font-medium mb-4">
+                          <p className="p-2 bg-accent/10 rounded-md text-accent font-medium mb-4">
                             {answer.question.correctAnswer}
                           </p>
                           <p className="text-sm font-medium text-muted-foreground mb-2">
@@ -262,6 +306,48 @@ export default function GradePage() {
             </TabsContent>
           ))}
         </Tabs>
+
+        {scoreEdits && scoreEdits.length > 0 && (
+          <Card className="mt-8">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <History className="h-5 w-5" />
+                Score Edit History
+              </CardTitle>
+              <CardDescription>
+                Audit log of all score changes for this week
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {scoreEdits.map((edit) => (
+                  <div key={edit.id} className="flex flex-col gap-1 border rounded-md p-3" data-testid={`score-edit-${edit.id}`}>
+                    <div className="flex items-center justify-between gap-2 flex-wrap">
+                      <span className="font-medium text-sm">
+                        Q{edit.question?.questionNumber}: {edit.question?.questionText}
+                      </span>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-destructive">
+                          {parseFloat(edit.oldPoints).toFixed(1)}
+                        </Badge>
+                        <span className="text-muted-foreground text-sm">&rarr;</span>
+                        <Badge variant="outline" className="text-accent">
+                          {parseFloat(edit.newPoints).toFixed(1)}
+                        </Badge>
+                      </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Reason: {edit.reason}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      By {edit.editedBy?.name} on {new Date(edit.editedAt).toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );

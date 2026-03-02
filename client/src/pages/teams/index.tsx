@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Users, Plus, UserPlus } from "lucide-react";
-import type { TeamWithMembers } from "@shared/schema";
+import { Users, Plus, UserPlus, Crown } from "lucide-react";
+import type { TeamWithMembers, Champion } from "@shared/schema";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -23,6 +23,14 @@ export default function TeamsPage() {
   const { data: myTeam } = useQuery<TeamWithMembers | null>({
     queryKey: ["/api/teams/my-team"],
   });
+
+  const { data: champions } = useQuery<Champion[]>({
+    queryKey: ["/api/champions"],
+  });
+
+  const isChampion = (teamName: string) => {
+    return champions?.some((c) => c.teamName === teamName) || false;
+  };
 
   const joinMutation = useMutation({
     mutationFn: async (teamId: string) => {
@@ -102,6 +110,9 @@ export default function TeamsPage() {
                       <div className="flex-1 min-w-0">
                         <CardTitle className="flex items-center gap-2 flex-wrap">
                           <span className="truncate">{team.name}</span>
+                          {isChampion(team.name) && (
+                            <Crown className="h-4 w-4 text-accent flex-shrink-0" data-testid={`icon-crown-${team.id}`} />
+                          )}
                           {isMyTeam && (
                             <Badge className="bg-accent text-accent-foreground flex-shrink-0">
                               My Team

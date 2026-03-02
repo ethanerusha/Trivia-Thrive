@@ -24,6 +24,8 @@ import CreateWeekPage from "@/pages/admin/weeks/create";
 import WeekDetailPage from "@/pages/admin/weeks/[weekId]";
 import GradePage from "@/pages/admin/grade";
 import AdminLeaderboardPage from "@/pages/admin/leaderboard";
+import HallOfFamePage from "@/pages/hall-of-fame";
+import AdminChampionsPage from "@/pages/admin/champions";
 import { Loader2 } from "lucide-react";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -144,6 +146,11 @@ function Router() {
           <ArchivesPage />
         </ProtectedRoute>
       </Route>
+      <Route path="/hall-of-fame">
+        <ProtectedRoute>
+          <HallOfFamePage />
+        </ProtectedRoute>
+      </Route>
       <Route path="/submit/:weekId">
         <ProtectedRoute>
           <SubmitPage />
@@ -182,6 +189,11 @@ function Router() {
       <Route path="/admin/leaderboard">
         <AdminRoute>
           <AdminLeaderboardPage />
+        </AdminRoute>
+      </Route>
+      <Route path="/admin/champions">
+        <AdminRoute>
+          <AdminChampionsPage />
         </AdminRoute>
       </Route>
       <Route component={NotFound} />

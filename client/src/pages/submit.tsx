@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { ClipboardList, Save, Send, ArrowLeft, Loader2, CheckCircle2, AlertCircle, User } from "lucide-react";
+import { ClipboardList, Save, Send, ArrowLeft, Loader2, CheckCircle2, AlertCircle, User, Clock, Ban } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -30,6 +30,8 @@ export default function SubmitPage() {
   const { toast } = useToast();
 
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
+  const [isDeadlinePassed, setIsDeadlinePassed] = useState(false);
 
   const { data: week, isLoading: weekLoading } = useQuery<WeekWithQuestions>({
     queryKey: ["/api/weeks", weekId],
@@ -50,6 +52,38 @@ export default function SubmitPage() {
   });
 
   const hasTeam = !!myTeam;
+
+  useEffect(() => {
+    if (!week?.deadline) {
+      setTimeLeft(null);
+      setIsDeadlinePassed(false);
+      return;
+    }
+
+    const calculateTimeLeft = () => {
+      const deadlineTime = new Date(week.deadline!).getTime();
+      const now = Date.now();
+      const diff = deadlineTime - now;
+
+      if (diff <= 0) {
+        setIsDeadlinePassed(true);
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+
+      setIsDeadlinePassed(false);
+      setTimeLeft({
+        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
+        minutes: Math.floor((diff / (1000 * 60)) % 60),
+        seconds: Math.floor((diff / 1000) % 60),
+      });
+    };
+
+    calculateTimeLeft();
+    const interval = setInterval(calculateTimeLeft, 1000);
+    return () => clearInterval(interval);
+  }, [week?.deadline]);
 
   useEffect(() => {
     if (existingSubmission && (existingSubmission as any).answers) {
@@ -199,6 +233,67 @@ export default function SubmitPage() {
           </Card>
         )}
 
+        {timeLeft !== null && (
+          <Card className={`mb-6 ${isDeadlinePassed ? "border-destructive/50 bg-destructive/5" : "border-accent/30 bg-accent/5"}`}>
+            <CardContent className="py-4">
+              {isDeadlinePassed ? (
+                <div className="flex items-center gap-3" data-testid="status-deadline-passed">
+                  <Ban className="h-5 w-5 text-destructive" />
+                  <div>
+                    <p className="font-semibold text-destructive">Submissions Closed</p>
+                    <p className="text-sm text-muted-foreground">The deadline for this week has passed.</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3" data-testid="status-countdown">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-accent" />
+                    <span className="font-semibold text-foreground">Time Remaining:</span>
+                  </div>
+                  <div className="flex gap-3">
+                    {timeLeft.days > 0 && (
+                      <div className="text-center">
+                        <span className="text-2xl font-bold text-foreground" data-testid="text-countdown-days">{timeLeft.days}</span>
+                        <p className="text-xs text-muted-foreground">days</p>
+                      </div>
+                    )}
+                    <div className="text-center">
+                      <span className="text-2xl font-bold text-foreground" data-testid="text-countdown-hours">{String(timeLeft.hours).padStart(2, "0")}</span>
+                      <p className="text-xs text-muted-foreground">hours</p>
+                    </div>
+                    <div className="text-center">
+                      <span className="text-2xl font-bold text-foreground" data-testid="text-countdown-minutes">{String(timeLeft.minutes).padStart(2, "0")}</span>
+                      <p className="text-xs text-muted-foreground">min</p>
+                    </div>
+                    <div className="text-center">
+                      <span className="text-2xl font-bold text-foreground" data-testid="text-countdown-seconds">{String(timeLeft.seconds).padStart(2, "0")}</span>
+                      <p className="text-xs text-muted-foreground">sec</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {isDeadlinePassed ? (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <Ban className="h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Submissions Closed</h3>
+              <p className="text-muted-foreground text-center mb-4">
+                The deadline for this week has passed. You can no longer submit or update answers.
+              </p>
+              <Link href="/dashboard">
+                <Button variant="outline">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Dashboard
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+        ) : (
+        <>
         <div className="space-y-6 mb-8">
           {sortedQuestions.map((question) => (
             <Card key={question.id}>
@@ -285,6 +380,8 @@ export default function SubmitPage() {
             </div>
           </CardContent>
         </Card>
+        </>
+        )}
       </div>
     </div>
   );

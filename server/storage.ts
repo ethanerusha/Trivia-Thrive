@@ -1,9 +1,11 @@
 import { 
-  users, teams, teamMembers, weeks, questions, submissions, answers,
+  users, teams, teamMembers, weeks, questions, submissions, answers, scoreEdits, champions,
   type User, type InsertUser, type Team, type InsertTeam, type TeamMember,
   type Week, type InsertWeek, type Question, type InsertQuestion, 
   type Submission, type Answer, type TeamWithMembers, type WeekWithQuestions,
-  type SubmissionWithAnswers, type LeaderboardEntry
+  type SubmissionWithAnswers, type LeaderboardEntry, type ArchivedWeekWithSubmission,
+  type ScoreEdit, type InsertScoreEdit, type ScoreEditWithDetails,
+  type Champion, type InsertChampion
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -59,9 +61,23 @@ export interface IStorage {
   updateAnswer(id: string, data: Partial<Answer>): Promise<void>;
   deleteAnswersBySubmission(submissionId: string): Promise<void>;
   
+  // Archived weeks with submissions
+  getArchivedWeeksWithSubmissions(teamId: string): Promise<ArchivedWeekWithSubmission[]>;
+
   // Leaderboard
   getLeaderboard(): Promise<LeaderboardEntry[]>;
   updateTeamPoints(teamId: string, points: number): Promise<void>;
+  
+  // Score Edits
+  createScoreEdit(data: InsertScoreEdit): Promise<ScoreEdit>;
+  getScoreEditsByWeek(weekId: string): Promise<ScoreEditWithDetails[]>;
+
+  // Champions
+  getAllChampions(): Promise<Champion[]>;
+  getChampion(id: string): Promise<Champion | undefined>;
+  createChampion(data: InsertChampion): Promise<Champion>;
+  updateChampion(id: string, data: Partial<Champion>): Promise<Champion | undefined>;
+  deleteChampion(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -440,9 +456,73 @@ export class DatabaseStorage implements IStorage {
     return leaderboard;
   }
 
+  async getArchivedWeeksWithSubmissions(teamId: string): Promise<ArchivedWeekWithSubmission[]> {
+    const archivedWeeks = await db
+      .select()
+      .from(weeks)
+      .where(eq(weeks.isPublished, true))
+      .orderBy(desc(weeks.weekNumber));
+
+    return Promise.all(
+      archivedWeeks.map(async (week) => {
+        const weekQuestions = await db.select().from(questions).where(eq(questions.weekId, week.id));
+        const submission = await this.getSubmissionWithAnswers(teamId, week.id);
+        return { ...week, questions: weekQuestions, teamSubmission: submission || null };
+      })
+    );
+  }
+
   async updateTeamPoints(teamId: string, points: number): Promise<void> {
-    // This would need a separate points override table in a real app
-    // For now, we just recalculate from submissions
+  }
+
+  async createScoreEdit(data: InsertScoreEdit): Promise<ScoreEdit> {
+    const [edit] = await db.insert(scoreEdits).values(data).returning();
+    return edit;
+  }
+
+  async getScoreEditsByWeek(weekId: string): Promise<ScoreEditWithDetails[]> {
+    const weekSubmissions = await db.select().from(submissions).where(eq(submissions.weekId, weekId));
+    const submissionIds = weekSubmissions.map(s => s.id);
+    
+    if (submissionIds.length === 0) return [];
+
+    const allEdits = await db
+      .select()
+      .from(scoreEdits)
+      .orderBy(desc(scoreEdits.editedAt));
+
+    const weekEdits = allEdits.filter(e => submissionIds.includes(e.submissionId));
+
+    return Promise.all(
+      weekEdits.map(async (edit) => {
+        const [editor] = await db.select().from(users).where(eq(users.id, edit.editedById));
+        const [question] = await db.select().from(questions).where(eq(questions.id, edit.questionId));
+        return { ...edit, editedBy: editor, question };
+      })
+    );
+  }
+
+  async getAllChampions(): Promise<Champion[]> {
+    return db.select().from(champions).orderBy(desc(champions.year));
+  }
+
+  async getChampion(id: string): Promise<Champion | undefined> {
+    const [champion] = await db.select().from(champions).where(eq(champions.id, id));
+    return champion || undefined;
+  }
+
+  async createChampion(data: InsertChampion): Promise<Champion> {
+    const [champion] = await db.insert(champions).values(data).returning();
+    return champion;
+  }
+
+  async updateChampion(id: string, data: Partial<Champion>): Promise<Champion | undefined> {
+    const [champion] = await db.update(champions).set(data).where(eq(champions.id, id)).returning();
+    return champion || undefined;
+  }
+
+  async deleteChampion(id: string): Promise<void> {
+    await db.delete(champions).where(eq(champions.id, id));
   }
 }
 

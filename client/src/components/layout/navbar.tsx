@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Menu, Trophy, Users, ClipboardList, Archive, Settings, LogOut, Home, Shield } from "lucide-react";
+import { Menu, Trophy, Users, ClipboardList, Archive, Settings, LogOut, Home, Shield, Crown } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
@@ -23,6 +23,7 @@ export function Navbar() {
     { href: "/teams", label: "Teams", icon: Users },
     { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
     { href: "/archives", label: "Archives", icon: Archive },
+    { href: "/hall-of-fame", label: "Hall of Fame", icon: Crown },
   ];
 
   const getInitials = (name: string) => {

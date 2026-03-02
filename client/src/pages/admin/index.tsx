@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Shield, Calendar, ClipboardCheck, Trophy, Plus, ArrowRight, Users } from "lucide-react";
+import { Shield, Calendar, ClipboardCheck, Trophy, Plus, ArrowRight, Users, Crown } from "lucide-react";
 import type { Week, LeaderboardEntry } from "@shared/schema";
 
 export default function AdminDashboardPage() {
@@ -207,7 +207,7 @@ export default function AdminDashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="md:col-span-2">
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Trophy className="h-5 w-5 text-accent" />
@@ -220,6 +220,25 @@ export default function AdminDashboardPage() {
                 <Button variant="outline" className="w-full" data-testid="button-manage-leaderboard">
                   <Trophy className="h-4 w-4 mr-2" />
                   Manage Leaderboard
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Crown className="h-5 w-5 text-accent" />
+                Hall of Fame
+              </CardTitle>
+              <CardDescription>Manage past champion entries</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/admin/champions">
+                <Button variant="outline" className="w-full" data-testid="button-manage-champions">
+                  <Crown className="h-4 w-4 mr-2" />
+                  Manage Champions
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>

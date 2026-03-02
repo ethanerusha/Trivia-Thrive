@@ -66,6 +66,7 @@ export const weeks = pgTable("weeks", {
   isActive: boolean("is_active").default(false).notNull(),
   isGraded: boolean("is_graded").default(false).notNull(),
   isPublished: boolean("is_published").default(false).notNull(),
+  deadline: timestamp("deadline"),
 });
 
 export const weeksRelations = relations(weeks, ({ many }) => ({
@@ -139,6 +140,50 @@ export const answersRelations = relations(answers, ({ one }) => ({
   }),
 }));
 
+// Champions table (Hall of Fame)
+export const champions = pgTable("champions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  year: integer("year").notNull(),
+  season: text("season"),
+  teamName: text("team_name").notNull(),
+  teamId: varchar("team_id").references(() => teams.id),
+  winningScore: decimal("winning_score", { precision: 6, scale: 1 }).default("0"),
+});
+
+export const championsRelations = relations(champions, ({ one }) => ({
+  team: one(teams, {
+    fields: [champions.teamId],
+    references: [teams.id],
+  }),
+}));
+
+// Score edits audit log
+export const scoreEdits = pgTable("score_edits", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  submissionId: varchar("submission_id").notNull().references(() => submissions.id),
+  questionId: varchar("question_id").notNull().references(() => questions.id),
+  oldPoints: decimal("old_points", { precision: 2, scale: 1 }).notNull(),
+  newPoints: decimal("new_points", { precision: 2, scale: 1 }).notNull(),
+  reason: text("reason").notNull(),
+  editedById: varchar("edited_by_id").notNull().references(() => users.id),
+  editedAt: timestamp("edited_at").defaultNow().notNull(),
+});
+
+export const scoreEditsRelations = relations(scoreEdits, ({ one }) => ({
+  submission: one(submissions, {
+    fields: [scoreEdits.submissionId],
+    references: [submissions.id],
+  }),
+  question: one(questions, {
+    fields: [scoreEdits.questionId],
+    references: [questions.id],
+  }),
+  editedBy: one(users, {
+    fields: [scoreEdits.editedById],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, isAdmin: true, isVerified: true, verificationToken: true }).extend({
   email: z.string().email("Please enter a valid email address"),
@@ -161,6 +206,10 @@ export const insertSubmissionSchema = createInsertSchema(submissions).omit({ id:
 
 export const insertAnswerSchema = createInsertSchema(answers).omit({ id: true, pointsAwarded: true });
 
+export const insertChampionSchema = createInsertSchema(champions).omit({ id: true });
+
+export const insertScoreEditSchema = createInsertSchema(scoreEdits).omit({ id: true, editedAt: true });
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -173,6 +222,10 @@ export type Question = typeof questions.$inferSelect;
 export type InsertQuestion = z.infer<typeof insertQuestionSchema>;
 export type Submission = typeof submissions.$inferSelect;
 export type Answer = typeof answers.$inferSelect;
+export type Champion = typeof champions.$inferSelect;
+export type InsertChampion = z.infer<typeof insertChampionSchema>;
+export type ScoreEdit = typeof scoreEdits.$inferSelect;
+export type InsertScoreEdit = z.infer<typeof insertScoreEditSchema>;
 
 // Extended types for frontend
 export type TeamWithMembers = Team & {
@@ -198,4 +251,13 @@ export type LeaderboardEntry = {
   totalPoints: number;
   rank: number;
   weeklyScores: { weekNumber: number; weekId: string; points: number }[];
+};
+
+export type ArchivedWeekWithSubmission = WeekWithQuestions & {
+  teamSubmission: SubmissionWithAnswers | null;
+};
+
+export type ScoreEditWithDetails = ScoreEdit & {
+  editedBy: User;
+  question: Question;
 };

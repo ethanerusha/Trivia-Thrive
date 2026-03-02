@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Calendar, Play, Pause, CheckCircle2, Eye, Loader2, Pencil, Trash2, Image } from "lucide-react";
+import { ArrowLeft, Calendar, Play, Pause, CheckCircle2, Eye, Loader2, Pencil, Trash2, Image, Clock } from "lucide-react";
 import type { WeekWithQuestions } from "@shared/schema";
 import {
   AlertDialog,
@@ -33,6 +33,7 @@ export default function WeekDetailPage() {
     weekNumber: number;
     title: string;
     introText: string;
+    deadline: string;
     questions: { questionText: string; correctAnswer: string; maxPoints: number; imageUrl?: string }[];
   } | null>(null);
 
@@ -111,10 +112,14 @@ export default function WeekDetailPage() {
   const handleStartEdit = () => {
     if (week) {
       const sortedQuestions = [...week.questions].sort((a, b) => a.questionNumber - b.questionNumber);
+      const deadlineValue = week.deadline 
+        ? new Date(week.deadline).toISOString().slice(0, 16)
+        : "";
       setEditData({
         weekNumber: week.weekNumber,
         title: week.title,
         introText: week.introText || "",
+        deadline: deadlineValue,
         questions: sortedQuestions.map(q => ({
           questionText: q.questionText,
           correctAnswer: q.correctAnswer,
@@ -189,6 +194,12 @@ export default function WeekDetailPage() {
                 {week.isPublished && <Badge className="bg-accent text-accent-foreground">Published</Badge>}
               </h1>
               <p className="text-muted-foreground">{week.title}</p>
+              {week.deadline && (
+                <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                  <Clock className="h-3 w-3" />
+                  Deadline: {new Date(week.deadline).toLocaleString()}
+                </p>
+              )}
             </div>
           </div>
           <div className="flex gap-2">
@@ -344,6 +355,20 @@ export default function WeekDetailPage() {
                   placeholder="Add an introduction message for this week's trivia..."
                   rows={3}
                   data-testid="input-intro"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="deadline" className="flex items-center gap-2">
+                  <Clock className="h-4 w-4" />
+                  Submission Deadline (Optional)
+                </Label>
+                <Input
+                  id="deadline"
+                  type="datetime-local"
+                  value={editData.deadline}
+                  onChange={(e) => setEditData({ ...editData, deadline: e.target.value })}
+                  data-testid="input-deadline"
                 />
               </div>
 

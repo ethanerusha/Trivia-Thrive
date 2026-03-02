@@ -45,15 +45,46 @@ The storage layer (`server/storage.ts`) provides a data access abstraction over 
 - **Method**: Session-based authentication with bcryptjs password hashing
 - **Domain Restriction**: None (open registration for WWT employees)
 - **Role System**: Users have `isAdmin` flag for admin access; no team lead concept (any member can submit)
+- **First User**: First registered user is automatically made admin
 
 ### Key Data Models
 - **Users**: Email, password, name, admin status, verification status
 - **Teams**: Name; one team per user; 3-4 members allowed
 - **Team Members**: Join table linking users to teams (direct join, no approval needed)
-- **Weeks**: Trivia rounds with week number, title, `introText` (optional intro paragraph), active/archived status
+- **Weeks**: Trivia rounds with week number, title, `introText` (optional intro paragraph), `deadline` (optional submission deadline), active/archived status
 - **Questions**: 10 questions per week with correct answers, configurable `maxPoints` (1-10), and optional `imageUrl`
 - **Submissions**: Team answers per week with grading status, tracks `submittedById` to show who submitted
 - **Answers**: Individual question responses with `pointsAwarded` (0 to question's maxPoints)
+- **Champions**: Hall of Fame entries with year, season, team name, optional team reference, winning score
+- **Score Edits**: Audit log for grade changes on closed/published weeks — tracks old/new points, reason, editor, timestamp
+
+## Pages & Routes
+
+### Public Routes
+- `/` — Landing page
+- `/login` — Login
+- `/register` — Registration
+- `/forgot-password` — Password reset
+
+### Protected Routes (Authenticated Users)
+- `/dashboard` — User dashboard with team status and active week
+- `/teams` — Team directory with member names and trophy eligibility
+- `/teams/create` — Create a new team
+- `/my-team` — Current user's team details
+- `/leaderboard` — Season leaderboard with per-week scores
+- `/archives` — Past weeks with questions, correct answers, and team's own submissions
+- `/hall-of-fame` — Champions from past seasons with crown badges
+- `/submit/:weekId` — Submit answers for active week (with countdown timer)
+- `/submissions` — View own team's past submissions
+
+### Admin Routes
+- `/admin` — Admin dashboard with stats and quick links
+- `/admin/weeks` — Manage all trivia weeks
+- `/admin/weeks/create` — Create new week with questions and deadline
+- `/admin/weeks/:weekId` — View/edit week details
+- `/admin/grade/:weekId` — Grade submissions (including re-grading closed weeks with audit log)
+- `/admin/leaderboard` — Leaderboard management
+- `/admin/champions` — Manage Hall of Fame champion entries
 
 ## External Dependencies
 
@@ -77,18 +108,9 @@ The storage layer (`server/storage.ts`) provides a data access abstraction over 
 - `DATABASE_URL`: PostgreSQL connection string
 - `SESSION_SECRET`: Secret key for session encryption (optional, has default)
 
-## Recent Changes (January 2026)
-
-### Season 6 Updates
-- Changed from Season 10 to Season 6 branding throughout the app
-- Removed @wwt.com email restriction - open registration for WWT employees
-- Removed team lead approval workflow - users can directly join teams
-- Added team size cap: maximum 4 members per team
-- Trophy eligibility: Teams of 1-3 members are eligible, teams of 4 are not
-- Any team member can now submit answers (not just team lead)
-
-### Completed Features
+## Completed Features
 - User registration and login (open to WWT employees)
+- **First user auto-admin**: First registered user becomes admin automatically
 - **Password reset flow**: Forgot password page with admin contact fallback
 - Team creation with direct joining (no approval needed)
 - Team size limits with trophy eligibility display (1-3 members eligible, 4 not)
@@ -99,10 +121,14 @@ The storage layer (`server/storage.ts`) provides a data access abstraction over 
 - **Week intro text**: Optional introduction paragraph displayed on submit page
 - **Question images**: Optional image URL for each question displayed on submit page
 - **Enhanced grading**: Admin can award 0 to maxPoints per question with slider and quick-select buttons
+- **Admin re-grading**: Admin can edit grades on closed/published weeks with required reason and audit trail
 - **Admin can view submissions while week is active** (not just after deactivation)
 - **Detailed results view**: Shows points earned vs max possible, with color-coded full/partial/wrong indicators
 - **Enhanced dashboard**: Displays team submissions with questions and answers prominently
 - Admin portal for managing weeks, questions, and grading
 - **Enhanced leaderboard**: Shows per-week scores across columns before total
-- Archives for viewing past weeks' results
+- **Archives with team submissions**: Shows correct answers alongside team's own submissions with color-coded scoring
+- **Hall of Fame**: Champions page showing past season winners; crown badge on teams page for past champions
+- **Countdown timer**: Admin sets deadline per week; live countdown on submit page; submissions blocked after deadline
+- **Score edit audit log**: All grade changes on published weeks are logged with old/new points, reason, and editor
 - Navy/Slate/Gold Material Design theme per design_guidelines.md
