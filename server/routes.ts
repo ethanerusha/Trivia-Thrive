@@ -464,6 +464,89 @@ export async function registerRoutes(
     res.json(submissions);
   });
 
+  // Returns all teams + their submission (if any) + week questions for grading
+  app.get("/api/admin/weeks/:weekId/grade-data", requireAdmin, async (req, res) => {
+    try {
+      const { weekId } = req.params;
+      const week = await storage.getWeekWithQuestions(weekId);
+      if (!week) return res.status(404).json({ message: "Week not found" });
+      const allTeams = await storage.getAllTeamsWithMembers();
+      const submissions = await storage.getWeekSubmissions(weekId);
+      res.json({ week, allTeams, submissions });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to load grade data" });
+    }
+  });
+
+  // Grade a team that did not submit — creates submission + placeholder answers + applies points
+  app.post("/api/admin/weeks/:weekId/grade-nonsubmitter/:teamId", requireAdmin, async (req, res) => {
+    try {
+      const { weekId, teamId } = req.params;
+      const { questionGrades, reason } = req.body; // [{ questionId, points }]
+
+      const week = await storage.getWeekWithQuestions(weekId);
+      if (!week) return res.status(404).json({ message: "Week not found" });
+
+      const isRegrade = week.isGraded || week.isPublished;
+      if (isRegrade && !reason) {
+        return res.status(400).json({ message: "A reason is required when re-grading a published or graded week" });
+      }
+
+      // Check if they already have a submission (shouldn't, but be safe)
+      let submission = await storage.getSubmission(teamId, weekId);
+      if (!submission) {
+        // Create a submission on behalf of admin
+        submission = await storage.createSubmission(teamId, weekId, req.session.userId!);
+        // Create placeholder answers for all questions
+        for (const q of week.questions) {
+          await storage.createAnswer(submission.id, q.id, "No submission");
+        }
+      }
+
+      // Now fetch the submission with its newly created answers
+      const submissionWithAnswers = await storage.getSubmissionWithAnswers(teamId, weekId);
+      if (!submissionWithAnswers) return res.status(500).json({ message: "Failed to load submission" });
+
+      const questionToAnswer: Record<string, { answerId: string; oldPoints: string }> = {};
+      for (const answer of submissionWithAnswers.answers) {
+        questionToAnswer[answer.questionId] = {
+          answerId: answer.id,
+          oldPoints: answer.pointsAwarded?.toString() || "0",
+        };
+      }
+
+      let total = 0;
+      for (const { questionId, points } of questionGrades) {
+        const question = week.questions.find(q => q.id === questionId);
+        const maxPoints = question?.maxPoints || 1;
+        const clampedPoints = Math.max(0, Math.min(points, maxPoints));
+        const entry = questionToAnswer[questionId];
+        if (!entry) continue;
+
+        if (isRegrade && parseFloat(entry.oldPoints) !== clampedPoints) {
+          await storage.createScoreEdit({
+            submissionId: submission.id,
+            questionId,
+            oldPoints: entry.oldPoints,
+            newPoints: clampedPoints.toString(),
+            reason: reason || "",
+            editedById: req.session.userId!,
+          });
+        }
+
+        await storage.updateAnswer(entry.answerId, { pointsAwarded: clampedPoints.toString() });
+        total += clampedPoints;
+      }
+
+      await storage.updateSubmission(submission.id, { isGraded: true, totalPoints: total.toString() });
+      await storage.updateWeek(weekId, { isGraded: true });
+      res.json({ message: "Grading saved" });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Grading failed" });
+    }
+  });
+
   app.post("/api/admin/weeks/:weekId/grade", requireAdmin, async (req, res) => {
     try {
       const { grades, reason } = req.body;
