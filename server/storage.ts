@@ -46,6 +46,7 @@ export interface IStorage {
   
   // Questions
   createQuestion(question: InsertQuestion): Promise<Question>;
+  updateQuestion(id: string, data: Partial<Question>): Promise<void>;
   
   // Submissions
   getSubmission(teamId: string, weekId: string): Promise<Submission | undefined>;
@@ -279,6 +280,10 @@ export class DatabaseStorage implements IStorage {
   async createQuestion(question: InsertQuestion): Promise<Question> {
     const [newQuestion] = await db.insert(questions).values(question).returning();
     return newQuestion;
+  }
+
+  async updateQuestion(id: string, data: Partial<Question>): Promise<void> {
+    await db.update(questions).set(data).where(eq(questions.id, id));
   }
 
   // Submissions

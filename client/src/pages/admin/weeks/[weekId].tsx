@@ -321,7 +321,14 @@ export default function WeekDetailPage() {
           <Card>
             <CardHeader>
               <CardTitle>Edit Week</CardTitle>
-              <CardDescription>Update week details and questions</CardDescription>
+              <CardDescription>
+                Update week details and questions.
+                {week.isActive && (
+                  <span className="block mt-1 text-amber-600 dark:text-amber-400">
+                    This week is active. Question text edits will update in place — existing team submissions are not affected.
+                  </span>
+                )}
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid gap-4 sm:grid-cols-2">

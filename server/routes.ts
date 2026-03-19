@@ -389,24 +389,34 @@ export async function registerRoutes(
       // Update week details
       await storage.updateWeek(weekId, { weekNumber, title, introText, deadline: deadline ? new Date(deadline) : null });
       
-      // Delete existing questions and recreate them
+      // Update questions — strategy depends on whether submissions exist
       const weekSubmissions = await storage.getWeekSubmissions(weekId);
+      const existingWeekWithQuestions = await storage.getWeekWithQuestions(weekId);
+
       if (weekSubmissions.length === 0) {
-        // Only update questions if there are no submissions
-        // First delete old answers linked to old questions  
-        const existingQuestions = await storage.getWeekWithQuestions(weekId);
-        if (existingQuestions) {
-          for (const q of existingQuestions.questions) {
+        // No submissions yet: safe to delete and recreate questions
+        if (existingWeekWithQuestions) {
+          for (const q of existingWeekWithQuestions.questions) {
             await db.delete(answers).where(eq(answers.questionId, q.id));
           }
           await db.delete(questions).where(eq(questions.weekId, weekId));
         }
-        
-        // Create new questions
         for (let i = 0; i < questionData.length; i++) {
           await storage.createQuestion({
             weekId,
             questionNumber: i + 1,
+            questionText: questionData[i].questionText,
+            correctAnswer: questionData[i].correctAnswer,
+            maxPoints: questionData[i].maxPoints || 1,
+            imageUrl: questionData[i].imageUrl || null,
+          });
+        }
+      } else {
+        // Submissions exist: update question text/answer/points in-place to preserve answer references
+        const sortedExisting = (existingWeekWithQuestions?.questions ?? [])
+          .sort((a, b) => a.questionNumber - b.questionNumber);
+        for (let i = 0; i < sortedExisting.length && i < questionData.length; i++) {
+          await storage.updateQuestion(sortedExisting[i].id, {
             questionText: questionData[i].questionText,
             correctAnswer: questionData[i].correctAnswer,
             maxPoints: questionData[i].maxPoints || 1,
