@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, Link, useLocation } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,10 +24,10 @@ export default function GradePage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
 
-  // grades keyed by answerId (submitted teams) or questionId (non-submitters)
   const [grades, setGrades] = useState<Record<string, number>>({});
   const [selectedTeamId, setSelectedTeamId] = useState<string | null>(null);
   const [reason, setReason] = useState("");
+  const [isSavingAll, setIsSavingAll] = useState(false);
   const [savingTeamId, setSavingTeamId] = useState<string | null>(null);
 
   const { data: gradeData, isLoading } = useQuery<GradeData>({
@@ -42,24 +42,19 @@ export default function GradePage() {
   const week = gradeData?.week;
   const allTeams = gradeData?.allTeams ?? [];
   const submissions = gradeData?.submissions ?? [];
-
   const isRegrade = week?.isGraded || week?.isPublished;
 
-  // Find submission for a team
   const getSubmission = (teamId: string) =>
     submissions.find(s => s.teamId === teamId) ?? null;
 
-  // Initialize grades whenever data loads
   useEffect(() => {
     if (!gradeData) return;
     const initial: Record<string, number> = {};
-    // For submitted teams: key = answerId
     for (const sub of gradeData.submissions) {
       for (const answer of sub.answers) {
         initial[answer.id] = parseFloat(answer.pointsAwarded?.toString() || "0");
       }
     }
-    // For non-submitting teams: key = `${teamId}:${questionId}` — start at 0
     if (gradeData.week) {
       for (const team of gradeData.allTeams) {
         const hasSubmission = gradeData.submissions.some(s => s.teamId === team.id);
@@ -77,69 +72,69 @@ export default function GradePage() {
     }
   }, [gradeData]);
 
-  // Grade a submitted team (uses answerId)
-  const gradeSubmittedMutation = useMutation({
-    mutationFn: async (teamId: string) => {
-      const submission = getSubmission(teamId);
-      if (!submission) throw new Error("No submission found");
-      const gradeData = submission.answers.map(a => ({
+  const saveTeam = async (teamId: string) => {
+    const submission = getSubmission(teamId);
+    if (submission) {
+      const gradePayload = submission.answers.map(a => ({
         answerId: a.id,
         points: grades[a.id] ?? 0,
       }));
-      return await apiRequest("POST", `/api/admin/weeks/${weekId}/grade`, {
-        grades: gradeData,
+      await apiRequest("POST", `/api/admin/weeks/${weekId}/grade`, {
+        grades: gradePayload,
         reason: isRegrade ? reason : undefined,
       });
-    },
-    onSuccess: () => {
-      toast({ title: "Grades saved!", description: isRegrade ? "Scores updated and changes logged." : "Grading complete." });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/weeks", weekId, "grade-data"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/score-edits", weekId] });
-      queryClient.invalidateQueries({ queryKey: ["/api/leaderboard"] });
-      setReason("");
-      setSavingTeamId(null);
-    },
-    onError: (error: Error) => {
-      toast({ variant: "destructive", title: "Failed to save", description: error.message });
-      setSavingTeamId(null);
-    },
-  });
-
-  // Grade a non-submitting team (uses questionId)
-  const gradeNonSubmitterMutation = useMutation({
-    mutationFn: async (teamId: string) => {
-      if (!week) throw new Error("Week not loaded");
+    } else {
+      if (!week) return;
+      const allZero = week.questions.every(q => (grades[`${teamId}:${q.id}`] ?? 0) === 0);
+      if (allZero) return; // skip non-submitters with no points assigned
       const questionGrades = week.questions.map(q => ({
         questionId: q.id,
         points: grades[`${teamId}:${q.id}`] ?? 0,
       }));
-      return await apiRequest("POST", `/api/admin/weeks/${weekId}/grade-nonsubmitter/${teamId}`, {
+      await apiRequest("POST", `/api/admin/weeks/${weekId}/grade-nonsubmitter/${teamId}`, {
         questionGrades,
         reason: isRegrade ? reason : undefined,
       });
-    },
-    onSuccess: () => {
-      toast({ title: "Grades saved!", description: "Admin-entered scores applied for this team." });
+    }
+  };
+
+  const handleSaveAll = async () => {
+    if (isRegrade && !reason.trim()) return;
+    setIsSavingAll(true);
+    try {
+      for (const team of allTeams) {
+        await saveTeam(team.id);
+      }
       queryClient.invalidateQueries({ queryKey: ["/api/admin/weeks", weekId, "grade-data"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/score-edits", weekId] });
       queryClient.invalidateQueries({ queryKey: ["/api/leaderboard"] });
+      toast({
+        title: "All grades saved!",
+        description: isRegrade ? "Scores updated and changes logged." : "All submissions have been graded.",
+      });
       setReason("");
-      setSavingTeamId(null);
-    },
-    onError: (error: Error) => {
-      toast({ variant: "destructive", title: "Failed to save", description: error.message });
-      setSavingTeamId(null);
-    },
-  });
+      if (!isRegrade) setLocation(`/admin/weeks/${weekId}`);
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Save failed", description: error.message });
+    } finally {
+      setIsSavingAll(false);
+    }
+  };
 
-  const handleSave = (teamId: string) => {
+  const handleSaveTeam = async (teamId: string) => {
     if (isRegrade && !reason.trim()) return;
     setSavingTeamId(teamId);
-    const submission = getSubmission(teamId);
-    if (submission) {
-      gradeSubmittedMutation.mutate(teamId);
-    } else {
-      gradeNonSubmitterMutation.mutate(teamId);
+    try {
+      await saveTeam(teamId);
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/weeks", weekId, "grade-data"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/score-edits", weekId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/leaderboard"] });
+      toast({ title: "Grades saved!", description: `Scores saved for this team.` });
+      setReason("");
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Save failed", description: error.message });
+    } finally {
+      setSavingTeamId(null);
     }
   };
 
@@ -151,8 +146,6 @@ export default function GradePage() {
     if (!week) return 0;
     return week.questions.reduce((sum, q) => sum + (grades[`${teamId}:${q.id}`] ?? 0), 0);
   };
-
-  const isSaving = gradeSubmittedMutation.isPending || gradeNonSubmitterMutation.isPending;
 
   if (isLoading) {
     return (
@@ -200,6 +193,7 @@ export default function GradePage() {
   }
 
   const sortedQuestions = [...(week.questions ?? [])].sort((a, b) => a.questionNumber - b.questionNumber);
+  const isAnySaving = isSavingAll || savingTeamId !== null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -208,19 +202,33 @@ export default function GradePage() {
           <ArrowLeft className="h-4 w-4 mr-2" />Back to Admin
         </Link>
 
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-foreground" data-testid="text-grade-title">
-            {isRegrade ? "Re-grade" : "Grade"} Week {week.weekNumber}
-          </h1>
-          <p className="text-muted-foreground">{week.title}</p>
-          {isRegrade && (
-            <div className="flex items-center gap-2 mt-2">
-              <AlertTriangle className="h-4 w-4 text-amber-500" />
-              <span className="text-sm text-amber-600 dark:text-amber-400">
-                This week has already been {week.isPublished ? "published" : "graded"}. Changes will be logged.
-              </span>
-            </div>
-          )}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground" data-testid="text-grade-title">
+              {isRegrade ? "Re-grade" : "Grade"} Week {week.weekNumber}
+            </h1>
+            <p className="text-muted-foreground">{week.title}</p>
+            {isRegrade && (
+              <div className="flex items-center gap-2 mt-2">
+                <AlertTriangle className="h-4 w-4 text-amber-500" />
+                <span className="text-sm text-amber-600 dark:text-amber-400">
+                  This week has already been {week.isPublished ? "published" : "graded"}. Changes will be logged.
+                </span>
+              </div>
+            )}
+          </div>
+          <Button
+            onClick={handleSaveAll}
+            disabled={isAnySaving || (isRegrade && !reason.trim())}
+            className="bg-accent text-accent-foreground shrink-0"
+            data-testid="button-save-all-grades"
+          >
+            {isSavingAll ? (
+              <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving All...</>
+            ) : (
+              <><CheckCircle2 className="mr-2 h-4 w-4" />{isRegrade ? "Save All Re-grades" : "Save All Grades"}</>
+            )}
+          </Button>
         </div>
 
         {isRegrade && (
@@ -253,9 +261,7 @@ export default function GradePage() {
                   data-testid={`tab-team-${team.id}`}
                 >
                   {team.name}
-                  {!submission && (
-                    <MinusCircle className="h-3 w-3 ml-1 text-muted-foreground" />
-                  )}
+                  {!submission && <MinusCircle className="h-3 w-3 ml-1 text-muted-foreground" />}
                   <Badge variant="secondary" className="ml-2">
                     {calculateTotal(team.id).toFixed(1)}
                   </Badge>
@@ -266,7 +272,7 @@ export default function GradePage() {
 
           {allTeams.map((team) => {
             const submission = getSubmission(team.id);
-            const isSavingThis = savingTeamId === team.id && isSaving;
+            const isSavingThis = savingTeamId === team.id;
 
             return (
               <TabsContent key={team.id} value={team.id}>
@@ -292,15 +298,16 @@ export default function GradePage() {
                         </CardDescription>
                       </div>
                       <Button
-                        onClick={() => handleSave(team.id)}
-                        disabled={isSavingThis || (isRegrade && !reason.trim())}
-                        className="bg-accent text-accent-foreground shrink-0"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleSaveTeam(team.id)}
+                        disabled={isAnySaving || (isRegrade && !reason.trim())}
                         data-testid={`button-save-grades-${team.id}`}
                       >
                         {isSavingThis ? (
                           <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</>
                         ) : (
-                          <><CheckCircle2 className="mr-2 h-4 w-4" />{isRegrade ? "Save Re-grade" : "Save Grades"}</>
+                          <>Save This Team</>
                         )}
                       </Button>
                     </div>
