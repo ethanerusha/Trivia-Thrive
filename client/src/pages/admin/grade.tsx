@@ -42,7 +42,7 @@ export default function GradePage() {
   const week = gradeData?.week;
   const allTeams = gradeData?.allTeams ?? [];
   const submissions = gradeData?.submissions ?? [];
-  const isRegrade = week?.isGraded || week?.isPublished;
+  const isRegrade = week?.isPublished;
 
   const getSubmission = (teamId: string) =>
     submissions.find(s => s.teamId === teamId) ?? null;

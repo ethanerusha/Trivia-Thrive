@@ -497,9 +497,9 @@ export async function registerRoutes(
       const week = await storage.getWeekWithQuestions(weekId);
       if (!week) return res.status(404).json({ message: "Week not found" });
 
-      const isRegrade = week.isGraded || week.isPublished;
+      const isRegrade = week.isPublished;
       if (isRegrade && !reason) {
-        return res.status(400).json({ message: "A reason is required when re-grading a published or graded week" });
+        return res.status(400).json({ message: "A reason is required when re-grading a published week" });
       }
 
       // Check if they already have a submission (shouldn't, but be safe)
@@ -566,10 +566,10 @@ export async function registerRoutes(
         return res.status(404).json({ message: "Week not found" });
       }
 
-      const isRegrade = week.isGraded || week.isPublished;
+      const isRegrade = week.isPublished;
       
       if (isRegrade && !reason) {
-        return res.status(400).json({ message: "A reason is required when re-grading a published or graded week" });
+        return res.status(400).json({ message: "A reason is required when re-grading a published week" });
       }
       
       const submissions = await storage.getWeekSubmissions(req.params.weekId);
