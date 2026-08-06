@@ -20,10 +20,11 @@ CREATE UNIQUE INDEX IF NOT EXISTS teams_season_name_idx ON teams (season, name);
 -- 4. Close out Season 6: nothing active, everything published into the archives
 UPDATE weeks SET is_active = false, is_published = true WHERE season = 6;
 
--- 5. Season 6 champion -> Hall of Fame
-INSERT INTO champions (year, season, team_name, winning_score)
-SELECT 2026, 'Season 6', 'Team Croniq (+ Rachel)', 0
+-- 5. Season 6 champion -> Hall of Fame (photo ships with the app at /champions/season6-team-croniq.jpg)
+INSERT INTO champions (year, season, team_name, winning_score, photo_url)
+SELECT 2026, 'Season 6', 'Team Croniq (+ Rachel)', 0, '/champions/season6-team-croniq.jpg'
 WHERE NOT EXISTS (SELECT 1 FROM champions WHERE season = 'Season 6');
+UPDATE champions SET photo_url = '/champions/season6-team-croniq.jpg' WHERE season = 'Season 6' AND photo_url IS NULL;
 
 -- 6. Season 7 Week 1 (draft placeholder; add questions in the admin portal)
 INSERT INTO weeks (week_number, season, title, intro_text, is_active, is_graded, is_published)
