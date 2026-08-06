@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Trophy, Users, ClipboardList, Calendar, ArrowRight, AlertCircle, CheckCircle2, Edit2, HelpCircle } from "lucide-react";
 import type { TeamWithMembers, Week, SubmissionWithAnswers } from "@shared/schema";
+import { SEASON_LABEL } from "@shared/config";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -34,7 +35,7 @@ export default function DashboardPage() {
             Welcome back, {user?.name?.split(" ")[0]}!
           </h1>
           <p className="text-muted-foreground mt-1">
-            Here's what's happening in Tuesday Trivia: Season 6
+            Here's what's happening in Tuesday Trivia: {SEASON_LABEL}
           </p>
         </div>
 

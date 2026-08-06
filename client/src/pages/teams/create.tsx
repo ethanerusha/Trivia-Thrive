@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { useToast } from "@/hooks/use-toast";
 import { Users, Loader2, Crown, ArrowLeft } from "lucide-react";
 import { Link } from "wouter";
+import { SEASON_LABEL } from "@shared/config";
 
 const createTeamSchema = z.object({
   name: z.string().min(2, "Team name must be at least 2 characters").max(50, "Team name is too long"),
@@ -144,7 +145,7 @@ export default function CreateTeamPage() {
               </div>
               <div className="flex items-start gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-accent mt-2" />
-                <p>Lead your team to Season 6 victory!</p>
+                <p>Lead your team to {SEASON_LABEL} victory!</p>
               </div>
             </CardContent>
           </Card>

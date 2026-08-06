@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { Trophy, Loader2, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { SEASON_LABEL } from "@shared/config";
 
 const registerSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -46,7 +47,7 @@ export default function RegisterPage() {
       await register(data.email, data.password, data.name);
       toast({
         title: "Account created!",
-        description: "Welcome to Tuesday Trivia: Season 6!",
+        description: `Welcome to Tuesday Trivia: ${SEASON_LABEL}!`,
       });
       setLocation("/dashboard");
     } catch (error) {
@@ -69,7 +70,7 @@ export default function RegisterPage() {
               <Trophy className="h-8 w-8 text-accent" />
             </div>
           </div>
-          <CardTitle className="text-2xl">Join Season 6</CardTitle>
+          <CardTitle className="text-2xl">Join {SEASON_LABEL}</CardTitle>
           <CardDescription>
             Create your Tuesday Trivia account
           </CardDescription>

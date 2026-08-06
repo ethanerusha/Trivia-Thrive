@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Shield, Calendar, ClipboardCheck, Trophy, Plus, ArrowRight, Users, Crown } from "lucide-react";
 import type { Week, LeaderboardEntry } from "@shared/schema";
+import { SEASON_LABEL } from "@shared/config";
 
 export default function AdminDashboardPage() {
   const { user } = useAuth();
@@ -50,7 +51,7 @@ export default function AdminDashboardPage() {
           <Shield className="h-8 w-8 text-accent" />
           <div>
             <h1 className="text-3xl font-bold text-foreground">Admin Portal</h1>
-            <p className="text-muted-foreground">Manage Tuesday Trivia: Season 6</p>
+            <p className="text-muted-foreground">Manage Tuesday Trivia: {SEASON_LABEL}</p>
           </div>
         </div>
 

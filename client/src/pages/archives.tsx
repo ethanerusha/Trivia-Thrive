@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Archive, CheckCircle2, HelpCircle, XCircle, MinusCircle } from "lucide-react";
 import type { ArchivedWeekWithSubmission } from "@shared/schema";
+import { CURRENT_SEASON } from "@shared/config";
 
 function getPointsIndicator(pointsAwarded: number, maxPoints: number) {
   if (pointsAwarded >= maxPoints) {
@@ -45,8 +46,17 @@ export default function ArchivesPage() {
             ))}
           </div>
         ) : weeks && weeks.length > 0 ? (
+          <div className="space-y-10">
+          {Array.from(new Set(weeks.map((w) => w.season))).sort((a, b) => b - a).map((season) => (
+          <div key={season}>
+          <h2 className="text-xl font-bold text-foreground mb-4" data-testid={`text-season-${season}`}>
+            Season {season}
+            {season !== CURRENT_SEASON && (
+              <Badge variant="secondary" className="ml-2 align-middle">Previous Season</Badge>
+            )}
+          </h2>
           <Accordion type="single" collapsible className="space-y-4">
-            {weeks.map((week) => {
+            {weeks.filter((w) => w.season === season).map((week) => {
               const submission = week.teamSubmission;
               const totalEarned = submission
                 ? submission.answers.reduce((sum, a) => sum + parseFloat(a.pointsAwarded?.toString() || "0"), 0)
@@ -163,6 +173,9 @@ export default function ArchivesPage() {
               );
             })}
           </Accordion>
+          </div>
+          ))}
+          </div>
         ) : (
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">

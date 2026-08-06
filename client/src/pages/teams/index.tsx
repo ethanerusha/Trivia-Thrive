@@ -11,6 +11,7 @@ import type { TeamWithMembers, Champion } from "@shared/schema";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { SEASON_LABEL } from "@shared/config";
 
 export default function TeamsPage() {
   const { user } = useAuth();
@@ -70,7 +71,7 @@ export default function TeamsPage() {
           <div>
             <h1 className="text-3xl font-bold text-foreground">Team Directory</h1>
             <p className="text-muted-foreground mt-1">
-              Browse all Season 6 teams
+              Browse all {SEASON_LABEL} teams
             </p>
           </div>
           {!myTeam && (
@@ -185,7 +186,7 @@ export default function TeamsPage() {
               <Users className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">No Teams Yet</h3>
               <p className="text-muted-foreground text-center mb-4">
-                Be the first to create a team for Season 6!
+                Be the first to create a team for {SEASON_LABEL}!
               </p>
               <Link href="/teams/create">
                 <Button className="bg-accent text-accent-foreground" data-testid="button-create-first-team">

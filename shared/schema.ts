@@ -24,8 +24,9 @@ export const usersRelations = relations(users, ({ one }) => ({
 // Teams table
 export const teams = pgTable("teams", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  name: text("name").notNull().unique(),
+  name: text("name").notNull(),
   leadId: varchar("lead_id").notNull().references(() => users.id),
+  season: integer("season").default(7).notNull(),
 });
 
 export const teamsRelations = relations(teams, ({ one, many }) => ({
@@ -60,7 +61,8 @@ export const teamMembersRelations = relations(teamMembers, ({ one }) => ({
 // Weeks table (trivia rounds)
 export const weeks = pgTable("weeks", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  weekNumber: integer("week_number").notNull().unique(),
+  weekNumber: integer("week_number").notNull(),
+  season: integer("season").default(7).notNull(),
   title: text("title").notNull(),
   introText: text("intro_text"),
   isActive: boolean("is_active").default(false).notNull(),
@@ -148,6 +150,7 @@ export const champions = pgTable("champions", {
   teamName: text("team_name").notNull(),
   teamId: varchar("team_id").references(() => teams.id),
   winningScore: decimal("winning_score", { precision: 6, scale: 1 }).default("0"),
+  photoUrl: text("photo_url"),
 });
 
 export const championsRelations = relations(champions, ({ one }) => ({

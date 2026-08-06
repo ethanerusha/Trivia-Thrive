@@ -9,6 +9,7 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
+import { CURRENT_SEASON } from "@shared/config";
 
 export interface IStorage {
   // Users
@@ -115,7 +116,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getTeamByName(name: string): Promise<Team | undefined> {
-    const [team] = await db.select().from(teams).where(eq(teams.name, name));
+    const [team] = await db
+      .select()
+      .from(teams)
+      .where(and(eq(teams.name, name), eq(teams.season, CURRENT_SEASON)));
     return team || undefined;
   }
 
@@ -147,7 +151,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllTeamsWithMembers(): Promise<TeamWithMembers[]> {
-    const allTeams = await db.select().from(teams);
+    const allTeams = await db.select().from(teams).where(eq(teams.season, CURRENT_SEASON));
     
     return Promise.all(
       allTeams.map(async (team) => {
@@ -174,19 +178,30 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createTeam(team: InsertTeam, leadId: string): Promise<Team> {
-    const [newTeam] = await db.insert(teams).values({ ...team, leadId }).returning();
+    const [newTeam] = await db
+      .insert(teams)
+      .values({ ...team, leadId, season: CURRENT_SEASON })
+      .returning();
     return newTeam;
   }
 
   async getTeamCount(): Promise<number> {
-    const result = await db.select({ count: sql<number>`count(*)` }).from(teams);
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(teams)
+      .where(eq(teams.season, CURRENT_SEASON));
     return Number(result[0].count);
   }
 
   // Team Members
   async getTeamMember(userId: string): Promise<TeamMember | undefined> {
-    const [member] = await db.select().from(teamMembers).where(eq(teamMembers.userId, userId));
-    return member || undefined;
+    // Only consider membership on a current-season team
+    const [row] = await db
+      .select({ member: teamMembers })
+      .from(teamMembers)
+      .innerJoin(teams, eq(teamMembers.teamId, teams.id))
+      .where(and(eq(teamMembers.userId, userId), eq(teams.season, CURRENT_SEASON)));
+    return row?.member || undefined;
   }
 
   async getTeamMemberById(id: string): Promise<TeamMember | undefined> {
@@ -217,7 +232,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getWeekByNumber(weekNumber: number): Promise<Week | undefined> {
-    const [week] = await db.select().from(weeks).where(eq(weeks.weekNumber, weekNumber));
+    const [week] = await db
+      .select()
+      .from(weeks)
+      .where(and(eq(weeks.weekNumber, weekNumber), eq(weeks.season, CURRENT_SEASON)));
     return week || undefined;
   }
 
@@ -230,20 +248,28 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllWeeks(): Promise<Week[]> {
-    return db.select().from(weeks).orderBy(desc(weeks.weekNumber));
+    return db
+      .select()
+      .from(weeks)
+      .where(eq(weeks.season, CURRENT_SEASON))
+      .orderBy(desc(weeks.weekNumber));
   }
 
   async getActiveWeek(): Promise<Week | undefined> {
-    const [week] = await db.select().from(weeks).where(eq(weeks.isActive, true));
+    const [week] = await db
+      .select()
+      .from(weeks)
+      .where(and(eq(weeks.isActive, true), eq(weeks.season, CURRENT_SEASON)));
     return week || undefined;
   }
 
   async getArchivedWeeks(): Promise<WeekWithQuestions[]> {
+    // All seasons — previous seasons' questions live here
     const archivedWeeks = await db
       .select()
       .from(weeks)
       .where(eq(weeks.isPublished, true))
-      .orderBy(desc(weeks.weekNumber));
+      .orderBy(desc(weeks.season), desc(weeks.weekNumber));
 
     return Promise.all(
       archivedWeeks.map(async (week) => {
@@ -462,11 +488,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getArchivedWeeksWithSubmissions(teamId: string): Promise<ArchivedWeekWithSubmission[]> {
+    // All seasons — previous seasons' questions live here
     const archivedWeeks = await db
       .select()
       .from(weeks)
       .where(eq(weeks.isPublished, true))
-      .orderBy(desc(weeks.weekNumber));
+      .orderBy(desc(weeks.season), desc(weeks.weekNumber));
 
     return Promise.all(
       archivedWeeks.map(async (week) => {

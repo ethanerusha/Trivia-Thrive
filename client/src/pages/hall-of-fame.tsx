@@ -52,7 +52,15 @@ export default function HallOfFamePage() {
                 </h2>
                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {grouped![year].map((champion) => (
-                    <Card key={champion.id} className="border-accent/30">
+                    <Card key={champion.id} className="border-accent/30 overflow-hidden">
+                      {champion.photoUrl && (
+                        <img
+                          src={champion.photoUrl}
+                          alt={`${champion.teamName} - champions`}
+                          className="w-full h-44 object-cover"
+                          data-testid={`img-champion-photo-${champion.id}`}
+                        />
+                      )}
                       <CardContent className="pt-6">
                         <div className="flex items-start gap-3">
                           <div className="flex-shrink-0 p-2 rounded-md bg-accent/10">

@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Menu, Trophy, Users, ClipboardList, Archive, Settings, LogOut, Home, Shield, Crown } from "lucide-react";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { SEASON_LABEL } from "@shared/config";
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -42,7 +43,7 @@ export function Navbar() {
           <Link href={user ? "/dashboard" : "/"} className="flex items-center gap-2 flex-shrink-0">
             <Trophy className="h-6 w-6 text-accent" />
             <span className="font-bold text-lg text-primary-foreground">Tuesday Trivia</span>
-            <span className="text-accent italic text-sm hidden sm:inline">Season 6</span>
+            <span className="text-accent italic text-sm hidden sm:inline">{SEASON_LABEL}</span>
           </Link>
 
           {user && (

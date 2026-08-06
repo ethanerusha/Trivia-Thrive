@@ -7,6 +7,7 @@ import { insertUserSchema, loginSchema, insertTeamSchema, insertWeekSchema, inse
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
+import { CURRENT_SEASON } from "@shared/config";
 
 declare module "express-session" {
   interface SessionData {
@@ -345,7 +346,7 @@ export async function registerRoutes(
         return res.status(400).json({ message: `Week ${weekNumber} already exists. Please choose a different week number.` });
       }
       
-      const week = await storage.createWeek({ weekNumber, title, introText, deadline: deadline ? new Date(deadline) : null });
+      const week = await storage.createWeek({ weekNumber, title, introText, season: CURRENT_SEASON, deadline: deadline ? new Date(deadline) : null });
       
       for (let i = 0; i < questionData.length; i++) {
         await storage.createQuestion({

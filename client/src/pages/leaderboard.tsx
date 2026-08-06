@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Trophy, Users, Medal } from "lucide-react";
 import type { LeaderboardEntry } from "@shared/schema";
+import { SEASON_LABEL } from "@shared/config";
 
 export default function LeaderboardPage() {
   const { user } = useAuth();
@@ -41,7 +42,7 @@ export default function LeaderboardPage() {
           <Trophy className="h-8 w-8 text-accent" />
           <div>
             <h1 className="text-3xl font-bold text-foreground">Leaderboard</h1>
-            <p className="text-muted-foreground">Season 6 Rankings</p>
+            <p className="text-muted-foreground">{SEASON_LABEL} Rankings</p>
           </div>
         </div>
 

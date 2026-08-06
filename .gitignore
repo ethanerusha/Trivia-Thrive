@@ -3,4 +3,10 @@ dist
 .DS_Store
 server/public
 vite.config.ts.*
-*.tar.gz
+*.tar.gz.pgdata/
+.browser/
+*.mjs.log
+pg.log
+start_pg.mjs
+restore.mjs
+shot*.mjs

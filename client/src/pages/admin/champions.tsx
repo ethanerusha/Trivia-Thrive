@@ -38,13 +38,14 @@ function ChampionForm({
   isPending,
 }: {
   champion?: Champion;
-  onSave: (data: { year: number; season: string; teamName: string; winningScore: string }) => void;
+  onSave: (data: { year: number; season: string; teamName: string; winningScore: string; photoUrl: string }) => void;
   isPending: boolean;
 }) {
   const [year, setYear] = useState(champion?.year?.toString() || new Date().getFullYear().toString());
   const [season, setSeason] = useState(champion?.season || "");
   const [teamName, setTeamName] = useState(champion?.teamName || "");
   const [winningScore, setWinningScore] = useState(champion?.winningScore || "0");
+  const [photoUrl, setPhotoUrl] = useState(champion?.photoUrl || "");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,6 +54,7 @@ function ChampionForm({
       season,
       teamName,
       winningScore,
+      photoUrl,
     });
   };
 
@@ -100,6 +102,16 @@ function ChampionForm({
           data-testid="input-champion-score"
         />
       </div>
+      <div className="space-y-2">
+        <Label htmlFor="photoUrl">Photo URL (optional)</Label>
+        <Input
+          id="photoUrl"
+          value={photoUrl}
+          onChange={(e) => setPhotoUrl(e.target.value)}
+          placeholder="e.g. /champions/season6.jpg"
+          data-testid="input-champion-photo-url"
+        />
+      </div>
       <DialogFooter>
         <Button type="submit" disabled={isPending} data-testid="button-save-champion">
           {isPending ? "Saving..." : champion ? "Update" : "Add Champion"}
@@ -120,7 +132,7 @@ export default function AdminChampionsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: { year: number; season: string; teamName: string; winningScore: string }) => {
+    mutationFn: async (data: { year: number; season: string; teamName: string; winningScore: string; photoUrl: string }) => {
       return await apiRequest("POST", "/api/admin/champions", data);
     },
     onSuccess: () => {
@@ -134,7 +146,7 @@ export default function AdminChampionsPage() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: { year: number; season: string; teamName: string; winningScore: string } }) => {
+    mutationFn: async ({ id, data }: { id: string; data: { year: number; season: string; teamName: string; winningScore: string; photoUrl: string } }) => {
       return await apiRequest("PUT", `/api/admin/champions/${id}`, data);
     },
     onSuccess: () => {

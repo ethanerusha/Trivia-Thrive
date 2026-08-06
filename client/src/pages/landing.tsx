@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Trophy, Users, ClipboardList, Award } from "lucide-react";
+import { SEASON_LABEL } from "@shared/config";
 
 export default function LandingPage() {
   return (
@@ -17,7 +18,7 @@ export default function LandingPage() {
             Tuesday Trivia
           </h1>
           <p className="text-2xl sm:text-3xl text-accent font-semibold italic mb-6">
-            Season 6
+            {SEASON_LABEL}
           </p>
           <p className="text-lg sm:text-xl text-white/90 mb-8 max-w-2xl mx-auto">
             Where WWT teams compete weekly for trivia glory. 
@@ -30,7 +31,7 @@ export default function LandingPage() {
                 className="bg-accent text-accent-foreground border-accent-border"
                 data-testid="hero-register"
               >
-                Join Season 6
+                Join {SEASON_LABEL}
               </Button>
             </Link>
             <Link href="/login">
@@ -71,7 +72,7 @@ export default function LandingPage() {
             <FeatureCard
               icon={Trophy}
               title="Climb the Ranks"
-              description="Track your progress on the leaderboard and compete for Season 6 championship!"
+              description={`Track your progress on the leaderboard and compete for the ${SEASON_LABEL} championship!`}
             />
           </div>
         </div>
@@ -80,7 +81,7 @@ export default function LandingPage() {
       <footer className="bg-primary py-8 px-4">
         <div className="max-w-6xl mx-auto text-center">
           <p className="text-primary-foreground/70 text-sm">
-            Tuesday Trivia: Season 6 - Exclusively for WWT employees
+            Tuesday Trivia: {SEASON_LABEL} - Exclusively for WWT employees
           </p>
         </div>
       </footer>
