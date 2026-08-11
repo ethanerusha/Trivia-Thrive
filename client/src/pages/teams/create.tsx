@@ -133,7 +133,7 @@ export default function CreateTeamPage() {
             <CardContent className="space-y-3 text-sm">
               <div className="flex items-start gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-accent mt-2" />
-                <p>Teams can have 3 or 4 members</p>
+                <p>Teams can have 1-4 members</p>
               </div>
               <div className="flex items-start gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-accent mt-2" />
