@@ -53,11 +53,6 @@ export default function DashboardPage() {
                   <div className="text-2xl font-bold">{myTeam.name}</div>
                   <div className="flex items-center text-xs text-muted-foreground mt-1">
                     <span>{myTeam.memberCount}/4 members</span>
-                    {myTeam.memberCount <= 3 && myTeam.memberCount >= 1 && (
-                      <Badge variant="secondary" className="ml-2 bg-accent/10 text-accent">
-                        Trophy Eligible
-                      </Badge>
-                    )}
                   </div>
                 </div>
               ) : (

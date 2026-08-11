@@ -79,7 +79,7 @@ export default function RegisterPage() {
           <Alert className="mb-6 border-accent/30 bg-accent/5">
             <AlertCircle className="h-4 w-4 text-accent" />
             <AlertDescription className="text-sm">
-              For WWT employees. Teams of 3 are ideal for trophy eligibility!
+              For WWT employees. Maximum team size is 4.
             </AlertDescription>
           </Alert>
           

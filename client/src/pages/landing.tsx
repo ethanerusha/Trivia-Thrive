@@ -57,7 +57,7 @@ export default function LandingPage() {
             <FeatureCard
               icon={Users}
               title="Form Your Team"
-              description="Create or join a team with your colleagues. Teams of 3 are ideal for trophy eligibility!"
+              description="Create or join a team with your colleagues. Maximum team size is 4."
             />
             <FeatureCard
               icon={ClipboardList}

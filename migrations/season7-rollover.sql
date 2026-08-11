@@ -29,6 +29,6 @@ UPDATE champions SET photo_url = '/champions/season6-team-croniq.jpg' WHERE seas
 -- 6. Season 7 Week 1 (draft placeholder; add questions in the admin portal)
 INSERT INTO weeks (week_number, season, title, intro_text, is_active, is_graded, is_published)
 SELECT 1, 7, 'S7W1: Season 7 Kickoff Trivia',
-       'Welcome to Season 7 of Tuesday Trivia! Form your team of 3 (trophy eligible) or 4 and get ready for Week 1.',
+       'Welcome to Season 7 of Tuesday Trivia! Form your team (maximum size 4) and get ready for Week 1.',
        true, false, false
 WHERE NOT EXISTS (SELECT 1 FROM weeks WHERE season = 7 AND week_number = 1);

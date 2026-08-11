@@ -123,9 +123,6 @@ export default function TeamsPage() {
                         <CardDescription className="flex items-center gap-1 mt-1">
                           <Users className="h-3 w-3" />
                           <span>{approvedMembers.length}/4 members</span>
-                          {approvedMembers.length >= 1 && approvedMembers.length <= 3 && (
-                            <Badge variant="secondary" className="text-xs ml-1 bg-accent/10 text-accent">Trophy Eligible</Badge>
-                          )}
                           {approvedMembers.length === 4 && (
                             <Badge variant="outline" className="text-xs ml-1">Full</Badge>
                           )}
