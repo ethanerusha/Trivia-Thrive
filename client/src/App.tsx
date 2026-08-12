@@ -26,6 +26,8 @@ import GradePage from "@/pages/admin/grade";
 import AdminLeaderboardPage from "@/pages/admin/leaderboard";
 import HallOfFamePage from "@/pages/hall-of-fame";
 import AdminChampionsPage from "@/pages/admin/champions";
+import AccountPage from "@/pages/account";
+import AdminUsersPage from "@/pages/admin/users";
 import { Loader2 } from "lucide-react";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -194,6 +196,16 @@ function Router() {
       <Route path="/admin/champions">
         <AdminRoute>
           <AdminChampionsPage />
+        </AdminRoute>
+      </Route>
+      <Route path="/account">
+        <ProtectedRoute>
+          <AccountPage />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/admin/users">
+        <AdminRoute>
+          <AdminUsersPage />
         </AdminRoute>
       </Route>
       <Route component={NotFound} />

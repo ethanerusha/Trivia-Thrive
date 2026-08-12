@@ -112,6 +112,12 @@ export function Navbar() {
                         Submissions
                       </Link>
                     </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href="/account" className="cursor-pointer" data-testid="menu-account">
+                        <Settings className="h-4 w-4 mr-2" />
+                        Account
+                      </Link>
+                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={logout} className="text-destructive cursor-pointer" data-testid="menu-logout">
                       <LogOut className="h-4 w-4 mr-2" />

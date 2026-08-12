@@ -18,6 +18,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, data: Partial<User>): Promise<User | undefined>;
   getUserCount(): Promise<number>;
+  getAllUsers(): Promise<User[]>;
   
   // Teams
   getTeam(id: string): Promise<Team | undefined>;
@@ -107,6 +108,10 @@ export class DatabaseStorage implements IStorage {
   async getUserCount(): Promise<number> {
     const result = await db.select({ count: sql<number>`count(*)` }).from(users);
     return Number(result[0].count);
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return db.select().from(users).orderBy(users.name);
   }
 
   // Teams

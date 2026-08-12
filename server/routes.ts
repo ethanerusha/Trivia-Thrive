@@ -145,6 +145,64 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/auth/change-password", requireAuth, async (req, res) => {
+    try {
+      const schema = z.object({
+        currentPassword: z.string().min(1, "Current password is required"),
+        newPassword: z.string().min(6, "New password must be at least 6 characters"),
+      });
+      const { currentPassword, newPassword } = schema.parse(req.body);
+
+      const user = await storage.getUser(req.session.userId!);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      const valid = await bcrypt.compare(currentPassword, user.password);
+      if (!valid) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      await storage.updateUser(user.id, { password: hashedPassword });
+      res.json({ message: "Password updated" });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: error.errors[0]?.message || "Invalid input" });
+      }
+      console.error(error);
+      res.status(500).json({ message: "Failed to change password" });
+    }
+  });
+
+  // ===== ADMIN USER MANAGEMENT =====
+  app.get("/api/admin/users", requireAdmin, async (req, res) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      res.json(allUsers.map(u => ({ ...u, password: undefined, verificationToken: undefined })));
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  app.post("/api/admin/users/:id/reset-password", requireAdmin, async (req, res) => {
+    try {
+      const user = await storage.getUser(req.params.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      const { randomBytes } = await import("crypto");
+      const tempPassword = "Trivia-" + randomBytes(6).toString("base64url");
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+      await storage.updateUser(user.id, { password: hashedPassword });
+      res.json({ tempPassword, email: user.email, name: user.name });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
+
   // ===== TEAM ROUTES =====
   app.get("/api/teams", requireAuth, async (req, res) => {
     const teams = await storage.getAllTeamsWithMembers();

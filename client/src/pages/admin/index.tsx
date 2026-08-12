@@ -245,6 +245,25 @@ export default function AdminDashboardPage() {
               </Link>
             </CardContent>
           </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-accent" />
+                Users
+              </CardTitle>
+              <CardDescription>Manage accounts and reset passwords</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href="/admin/users">
+                <Button variant="outline" className="w-full" data-testid="button-manage-users">
+                  <Users className="h-4 w-4 mr-2" />
+                  Manage Users
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
