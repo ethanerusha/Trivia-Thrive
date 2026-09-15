@@ -1,7 +1,14 @@
 import { sql, relations } from "drizzle-orm";
-import { pgTable, text, varchar, integer, boolean, timestamp, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, boolean, timestamp, decimal, customType } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+
+// Raw binary column type. node-postgres reads/writes bytea as a Buffer.
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType() {
+    return "bytea";
+  },
+});
 
 // Users table
 export const users = pgTable("users", {
@@ -94,6 +101,19 @@ export const questionsRelations = relations(questions, ({ one, many }) => ({
   }),
   answers: many(answers),
 }));
+
+// Uploaded images (question images, champion photos).
+// Stored in Postgres because the Replit autoscale filesystem is ephemeral —
+// anything written to disk is lost on redeploy and isn't shared between instances.
+export const uploadedImages = pgTable("uploaded_images", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  filename: text("filename"),
+  mimeType: text("mime_type").notNull(),
+  byteSize: integer("byte_size").notNull(),
+  data: bytea("data").notNull(),
+  uploadedById: varchar("uploaded_by_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 // Submissions table (team's submission for a week)
 export const submissions = pgTable("submissions", {
@@ -229,6 +249,8 @@ export type Champion = typeof champions.$inferSelect;
 export type InsertChampion = z.infer<typeof insertChampionSchema>;
 export type ScoreEdit = typeof scoreEdits.$inferSelect;
 export type InsertScoreEdit = z.infer<typeof insertScoreEditSchema>;
+export type UploadedImage = typeof uploadedImages.$inferSelect;
+export type InsertUploadedImage = typeof uploadedImages.$inferInsert;
 
 // Extended types for frontend
 export type TeamWithMembers = Team & {

@@ -1,11 +1,12 @@
 import { 
-  users, teams, teamMembers, weeks, questions, submissions, answers, scoreEdits, champions,
+  users, teams, teamMembers, weeks, questions, submissions, answers, scoreEdits, champions, uploadedImages,
   type User, type InsertUser, type Team, type InsertTeam, type TeamMember,
   type Week, type InsertWeek, type Question, type InsertQuestion, 
   type Submission, type Answer, type TeamWithMembers, type WeekWithQuestions,
   type SubmissionWithAnswers, type LeaderboardEntry, type ArchivedWeekWithSubmission,
   type ScoreEdit, type InsertScoreEdit, type ScoreEditWithDetails,
-  type Champion, type InsertChampion
+  type Champion, type InsertChampion,
+  type UploadedImage, type InsertUploadedImage
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -49,7 +50,11 @@ export interface IStorage {
   // Questions
   createQuestion(question: InsertQuestion): Promise<Question>;
   updateQuestion(id: string, data: Partial<Question>): Promise<void>;
-  
+
+  // Uploaded images
+  createUploadedImage(image: InsertUploadedImage): Promise<UploadedImage>;
+  getUploadedImage(id: string): Promise<UploadedImage | undefined>;
+
   // Submissions
   getSubmission(teamId: string, weekId: string): Promise<Submission | undefined>;
   getSubmissionWithAnswers(teamId: string, weekId: string): Promise<SubmissionWithAnswers | undefined>;
@@ -315,6 +320,17 @@ export class DatabaseStorage implements IStorage {
 
   async updateQuestion(id: string, data: Partial<Question>): Promise<void> {
     await db.update(questions).set(data).where(eq(questions.id, id));
+  }
+
+  // Uploaded images
+  async createUploadedImage(image: InsertUploadedImage): Promise<UploadedImage> {
+    const [newImage] = await db.insert(uploadedImages).values(image).returning();
+    return newImage;
+  }
+
+  async getUploadedImage(id: string): Promise<UploadedImage | undefined> {
+    const [image] = await db.select().from(uploadedImages).where(eq(uploadedImages.id, id));
+    return image || undefined;
   }
 
   // Submissions

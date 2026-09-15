@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
+import { ensureSchema } from "./db";
 import { createServer } from "http";
 
 const app = express();
@@ -60,6 +61,15 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  // Create any missing tables before serving traffic. Never blocks startup:
+  // if it fails, the rest of the app still works and the error is logged.
+  try {
+    await ensureSchema();
+    log("schema check complete");
+  } catch (err) {
+    console.error("Schema check failed — image uploads may not work:", err);
+  }
+
   await registerRoutes(httpServer, app);
 
   app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {

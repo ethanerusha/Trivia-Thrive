@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2, Loader2, Calendar, Image, Clock } from "lucide-react";
+import { ImageField } from "@/components/admin/image-field";
+import { ArrowLeft, Plus, Trash2, Loader2, Calendar, Clock } from "lucide-react";
 
 const questionSchema = z.object({
   questionText: z.string().min(1, "Question is required"),
@@ -242,15 +243,11 @@ export default function CreateWeekPage() {
                       name={`questions.${index}.imageUrl`}
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-sm text-muted-foreground flex items-center gap-2">
-                            <Image className="h-4 w-4" />
-                            Image URL (Optional)
-                          </FormLabel>
                           <FormControl>
-                            <Input
-                              placeholder="https://example.com/image.jpg"
-                              data-testid={`input-image-${index + 1}`}
-                              {...field}
+                            <ImageField
+                              value={field.value || ""}
+                              onChange={field.onChange}
+                              testId={`${index + 1}`}
                             />
                           </FormControl>
                           <FormMessage />

@@ -1,4 +1,4 @@
-import type { Express, Request, Response, NextFunction } from "express";
+import express, { type Express, type Request, type Response, type NextFunction } from "express";
 import { createServer, type Server } from "http";
 import session from "express-session";
 import { storage } from "./storage";
@@ -380,6 +380,69 @@ export async function registerRoutes(
   app.get("/api/leaderboard", requireAuth, async (req, res) => {
     const leaderboard = await storage.getLeaderboard();
     res.json(leaderboard);
+  });
+
+  // ===== IMAGE ROUTES =====
+  // Images live in Postgres, not on disk: Replit autoscale has an ephemeral
+  // filesystem, so uploaded files would disappear on every redeploy.
+  const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp"];
+  const MAX_IMAGE_BYTES = 8 * 1024 * 1024; // 8MB — the client compresses well below this
+
+  app.post(
+    "/api/admin/images",
+    requireAdmin,
+    express.raw({ type: ALLOWED_IMAGE_TYPES, limit: MAX_IMAGE_BYTES }),
+    async (req, res) => {
+      try {
+        const body = req.body;
+        if (!Buffer.isBuffer(body) || body.length === 0) {
+          return res.status(400).json({
+            message: "No image received. Supported types: JPEG, PNG, GIF, WebP.",
+          });
+        }
+
+        const mimeType = (req.headers["content-type"] || "").split(";")[0].trim();
+        if (!ALLOWED_IMAGE_TYPES.includes(mimeType)) {
+          return res.status(400).json({ message: `Unsupported image type: ${mimeType}` });
+        }
+
+        const rawName = req.headers["x-filename"];
+        const filename =
+          typeof rawName === "string" ? decodeURIComponent(rawName).slice(0, 200) : null;
+
+        const image = await storage.createUploadedImage({
+          filename,
+          mimeType,
+          byteSize: body.length,
+          data: body,
+          uploadedById: req.session.userId!,
+        });
+
+        res.json({ id: image.id, url: `/api/images/${image.id}`, byteSize: image.byteSize });
+      } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Failed to upload image. Please try again." });
+      }
+    }
+  );
+
+  // Public so <img> tags render everywhere, including the Hall of Fame.
+  // IDs are random UUIDs, so they aren't enumerable.
+  app.get("/api/images/:id", async (req, res) => {
+    try {
+      const image = await storage.getUploadedImage(req.params.id);
+      if (!image) {
+        return res.status(404).json({ message: "Image not found" });
+      }
+      res.set("Content-Type", image.mimeType);
+      res.set("Content-Length", String(image.byteSize));
+      // Content never changes for a given ID, so cache hard.
+      res.set("Cache-Control", "public, max-age=31536000, immutable");
+      res.send(image.data);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Failed to load image" });
+    }
   });
 
   // ===== ADMIN ROUTES =====

@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { ImageField } from "@/components/admin/image-field";
 import { Shield, Crown, Plus, Pencil, Trash2 } from "lucide-react";
 import {
   Dialog,
@@ -103,13 +104,11 @@ function ChampionForm({
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="photoUrl">Photo URL (optional)</Label>
-        <Input
-          id="photoUrl"
+        <ImageField
           value={photoUrl}
-          onChange={(e) => setPhotoUrl(e.target.value)}
-          placeholder="e.g. /champions/season6.jpg"
-          data-testid="input-champion-photo-url"
+          onChange={setPhotoUrl}
+          label="Champion photo (optional)"
+          testId="champion-photo"
         />
       </div>
       <DialogFooter>

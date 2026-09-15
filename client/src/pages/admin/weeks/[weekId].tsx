@@ -10,7 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Calendar, Play, Pause, CheckCircle2, Eye, Loader2, Pencil, Trash2, Image, Clock } from "lucide-react";
+import { ImageField } from "@/components/admin/image-field";
+import { ArrowLeft, Calendar, Play, Pause, CheckCircle2, Eye, Loader2, Pencil, Trash2, Clock } from "lucide-react";
 import type { WeekWithQuestions } from "@shared/schema";
 import {
   AlertDialog,
@@ -426,18 +427,15 @@ export default function WeekDetailPage() {
                         />
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <Image className="h-4 w-4 text-muted-foreground" />
-                      <Input
-                        value={q.imageUrl || ""}
-                        onChange={(e) => {
-                          const newQuestions = [...editData.questions];
-                          newQuestions[index].imageUrl = e.target.value;
-                          setEditData({ ...editData, questions: newQuestions });
-                        }}
-                        placeholder="Image URL (optional)"
-                      />
-                    </div>
+                    <ImageField
+                      value={q.imageUrl || ""}
+                      onChange={(newValue) => {
+                        const newQuestions = [...editData.questions];
+                        newQuestions[index].imageUrl = newValue;
+                        setEditData({ ...editData, questions: newQuestions });
+                      }}
+                      testId={`${index + 1}`}
+                    />
                   </div>
                 ))}
               </div>
